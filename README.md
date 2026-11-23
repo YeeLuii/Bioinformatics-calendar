@@ -6,8 +6,6 @@
 
 ![四象限桌面与计划本](docs/screenshots/board.png)
 
-*截图中的项目、进度和结果全部是演示数据。*
-
 ## 主要功能
 
 - **安排工作**：自由拖放项目和会话卡片，横轴表示紧迫性，纵轴表示重要性。用文件夹组织相关工作。
@@ -20,6 +18,14 @@
 这里显示的状态来自人工登记或你配置的数据适配器。当前版本不自动读取 SLURM、计算进程或 Codex 会话的实时运行状态，也不会把探索性分析自动认定为最终结果。
 
 ## 快速开始
+
+### 一句话快速部署
+
+复制下面这句话交给 Agent：
+
+> 请在本机部署 https://github.com/YeeLuii/Bioinformatics-calendar ，按仓库文档准备 Python 环境、创建独立工作区并选择可用端口启动网页，配置当前 Agent 客户端的 MCP 入口，保留已有项目和配置，验证网页与 MCP 可用后告知访问地址、工作区位置及启停方法。
+
+### 手动部署
 
 需要 Python 3.9 或更新版本和现代浏览器。运行时只用 Python 标准库；无需 pip、npm、数据库服务或前端构建。
 
@@ -49,7 +55,7 @@ python -B desktop_server.py --config ../ai4s-demo/workspace.json --open
 |---|---|
 | ![项目详情](docs/screenshots/project.png) | ![分析结果](docs/screenshots/results.png) |
 
-本地项目不显示服务器入口。图片是实际运行页面截图，不是设计稿。
+本地项目不显示服务器入口。
 
 ## 三个常见用法
 
