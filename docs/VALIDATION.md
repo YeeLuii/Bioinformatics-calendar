@@ -2,7 +2,7 @@
 
 日期：2026-11-23；版本：1.0.0。
 
-本机 Windows 上执行 `python -B -m unittest discover -p "test_*.py" -v`，12 项测试通过。
+本机 Windows 上执行 `python -B -m unittest discover -p "test_*.py" -v`，13 项测试通过。
 
 | 范围 | 验证内容 |
 |---|---|
@@ -15,6 +15,7 @@
 | 并发 | 两个 MCP 进程写入相同 revision，只有一个成功 |
 | HTTP | Host/Origin/token 校验、项目归档恢复、摘要和日程接口 |
 | 契约 | 提交的 OpenAPI 与运行时代码生成结果一致 |
+| 字符编码 | 英文 Windows 的 cp1252 重定向环境下，中文帮助和工作区路径仍输出 UTF-8 |
 | 演示 | 创建 6 个虚构项目和 4 个结果包；已有目录拒绝覆盖 |
 
 浏览器检查覆盖桌面、计划本勾选并重载、文件夹展开、项目详情和结果视图；未观察到 JavaScript 异常。390 px 宽度下没有页面横向溢出。HTTP 示例脚本在演示工作区实际完成新建和汇总。

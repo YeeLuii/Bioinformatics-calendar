@@ -11,6 +11,11 @@ CATEGORIES={'paper':'可用于文章的结果','exploratory':'探索性结果','
 
 def workspace_lock():return storage_lock(DATA_DIR)
 
+def configure_console():
+    """Keep CLI output readable when redirected on non-Chinese Windows systems."""
+    for stream in (sys.stdout,sys.stderr):
+        if hasattr(stream,'reconfigure'):stream.reconfigure(encoding='utf-8')
+
 def configure(config_path=None,data_dir=None):
     global CONFIG,DATA_DIR,WORKSPACE_ROOT
     p=pathlib.Path(config_path).resolve() if config_path else APP_DIR/'workspace.json'

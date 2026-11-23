@@ -93,6 +93,7 @@ def create(destination, day, port=8841):
 
 
 if __name__ == '__main__':
+    rt.configure_console()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--destination', required=True)
     parser.add_argument('--date', type=datetime.date.fromisoformat, default=datetime.date.today())

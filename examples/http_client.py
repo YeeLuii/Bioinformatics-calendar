@@ -17,6 +17,9 @@ def call(base, path, method='GET', body=None, token=None):
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base', default='http://127.0.0.1:8828')
     parser.add_argument('action', choices=['list', 'create-example', 'summary'])

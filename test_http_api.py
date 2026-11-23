@@ -1,6 +1,7 @@
 """Exercise the actual HTTP adapter in an isolated workspace."""
 import json
 import http.client
+import os
 import pathlib
 import socket
 import subprocess
@@ -91,6 +92,19 @@ class HTTPTests(unittest.TestCase):
 
 
 class ContractTests(unittest.TestCase):
+    def test_cli_output_is_utf8_under_legacy_windows_encoding(self):
+        env = {**os.environ, 'PYTHONIOENCODING': 'cp1252'}
+        help_result = subprocess.run([sys.executable, '-B', str(rt.APP_DIR / 'desktop_server.py'), '--help'],
+                                     env=env, capture_output=True, timeout=10)
+        self.assertEqual(help_result.returncode, 0, help_result.stderr)
+        self.assertIn('AI4S工作台', help_result.stdout.decode('utf8'))
+        with tempfile.TemporaryDirectory(prefix='ai4s-encoding-') as temp:
+            destination = pathlib.Path(temp) / '科研工作区'
+            result = subprocess.run([sys.executable, '-B', str(rt.APP_DIR / 'desktop_manage.py'), 'init', str(destination)],
+                                    env=env, capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn('科研工作区', result.stdout.decode('utf8'))
+
     def test_checked_in_openapi_matches_code(self):
         self.assertEqual(json.loads((rt.APP_DIR / 'openapi.json').read_text(encoding='utf8')), contract.openapi())
 

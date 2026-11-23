@@ -150,6 +150,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
     do_PUT=do_POST
 
 if __name__=='__main__':
+    runtime.configure_console()
     parser=argparse.ArgumentParser(description='AI4S工作台');parser.add_argument('--port',type=int);parser.add_argument('--config');parser.add_argument('--data-dir');parser.add_argument('--open',action='store_true');args=parser.parse_args()
     runtime.configure(args.config,args.data_dir);HERE=runtime.DATA_DIR;ROOT=runtime.WORKSPACE_ROOT;PORT=args.port or runtime.CONFIG.get('port',8828)
     server=http.server.ThreadingHTTPServer(('127.0.0.1',PORT),Handler)

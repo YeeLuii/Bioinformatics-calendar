@@ -89,6 +89,7 @@ def mcp_config(config_path,format='json'):
     else:print('[mcp_servers.ai4s]\ncommand = '+json.dumps(sys.executable)+'\nargs = '+json.dumps(args,ensure_ascii=False))
 
 if __name__=='__main__':
+    rt.configure_console()
     parser=argparse.ArgumentParser(description='AI4S工作区工具')
     sub=parser.add_subparsers(dest='command',required=True)
     p=sub.add_parser('init');p.add_argument('directory')
