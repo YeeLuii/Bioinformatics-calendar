@@ -22,4 +22,3 @@
 截图由真实演示页面生成，保存在 `docs/screenshots/`。没有使用个人研究路径、真实会话编号或未发表结果。
 
 GitHub Actions 配置了 Windows/Linux × Python 3.9/3.12。远程运行情况以仓库 Actions 页面为准，不把本机验证等同于所有平台通过。macOS 原生导航和所有第三方 MCP 客户端没有逐一验证。
-

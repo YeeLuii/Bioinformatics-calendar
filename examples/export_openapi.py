@@ -11,4 +11,3 @@ if __name__ == '__main__':
     target = ROOT / 'openapi.json'
     target.write_text(json.dumps(desktop_contract.openapi(), ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(target)
-

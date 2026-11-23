@@ -75,4 +75,3 @@ def card_target(id):
         if not p.is_dir():raise ValueError('目录不存在')
         return str(p)
     raise ValueError('此卡片没有直接打开目标')
-

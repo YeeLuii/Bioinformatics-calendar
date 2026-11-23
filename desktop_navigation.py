@@ -6,4 +6,3 @@ def open_native(target):
     else:
         command='open' if sys.platform=='darwin' else 'xdg-open'
         subprocess.run([command,str(target)],check=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,timeout=15)
-

@@ -101,4 +101,3 @@ CREATE INDEX files_bundle ON files(bundle_id);
 `object_type` 为 `file` 或 `directory`；本地 path 使用绝对路径。支持的可选导出文件为 `tables/unified_file_inventory.tsv` 和 `UNIFIED_RESULTS.md`。
 
 适配器更新时先完整写入新 SQLite 文件和 JSON，再原子替换指针，避免读到半成品。不要覆盖正在使用的数据库文件。`updated_at` 用于页面每 60 秒发现新摘要；人工项目变化也会被页面检查。桌面状态没有跨浏览器实时推送，冲突后需要刷新。
-

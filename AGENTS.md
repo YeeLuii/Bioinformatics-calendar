@@ -11,4 +11,3 @@ AI4S is a local research calendar and project organizer. Keep the runtime depend
 - Update usage and API documentation when behavior changes. Explain limitations in plain language; project status is registered metadata unless an explicit adapter supplies it.
 - Run `python -B -m unittest discover -p "test_*.py" -v` before publishing. Review the actual page for visible UI changes.
 - Do not add dependencies, a chat SDK, or hosted infrastructure without a concrete requirement. The app is intended for single-user loopback deployment.
-

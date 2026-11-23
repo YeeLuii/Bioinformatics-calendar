@@ -60,4 +60,3 @@ def save_project(obj):
         entries={p['id']:p for p in current['projects']};entries[clean['id']]=clean
         result=dict(schema_version=1,revision=current['revision']+1,projects=list(entries.values()))
         write_json(path('desktop_projects.json'),result);return result
-
