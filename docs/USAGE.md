@@ -13,7 +13,7 @@
 
 桌面文件夹是视觉分组，不对应磁盘目录，不改变 Codex 项目归属。目前只支持一层文件夹。卡片允许重叠；通过拖动或菜单重新安排，不会自动重排用户布局。
 
-![文件夹中的分析项目](screenshots/folder.png)
+文件夹展示见 [演示截图](https://github.com/YeeLuii/Bioinformatics-calendar/blob/main/docs/screenshots/folder.png)。
 
 ## 2. 查看任务状态与结果
 
