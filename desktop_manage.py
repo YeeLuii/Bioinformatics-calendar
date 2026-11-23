@@ -2,7 +2,7 @@
 import argparse, json, pathlib, zipfile, sys
 import desktop_runtime as rt
 
-CODE=['desktop_server.py','desktop_runtime.py','desktop_state.py','desktop_manage.py','desktop_storage.py','desktop_repository.py','desktop_navigation.py','desktop_links.py','desktop_services.py','desktop_contract.py','desktop_mcp.py']
+CODE=['desktop_server.py','desktop_runtime.py','desktop_state.py','desktop_manage.py','desktop_storage.py','desktop_repository.py','desktop_navigation.py','desktop_links.py','desktop_services.py','desktop_contract.py','desktop_mcp.py','deploy.py','deploy_codex.py','deploy.ps1','deploy.sh']
 WEB=['index.html','style.css','board.css','app.js','board.js','details.js','icon.svg']
 DATA=['desktop_data.json','desktop_projects.json','desktop_project_links.json','desktop_threads.json','desktop_board_state.json']
 
@@ -35,24 +35,25 @@ def pack(output,include_index=False):
             z.write(rt.path(name),'data/'+name);z.write(rt.path('desktop_active.json'),'data/desktop_active.json')
             for name in ['tables/unified_file_inventory.tsv','UNIFIED_RESULTS.md']:
                 if rt.path(name).is_file():z.write(rt.path(name),'data/'+name)
-        z.writestr('start.cmd','@echo off\r\ncd /d "%~dp0"\r\npython -B desktop_server.py --config workspace.json --open\r\n')
+        z.writestr('start.cmd','@echo off\r\ncd /d "%~dp0"\r\npowershell -NoProfile -ExecutionPolicy Bypass -File ".\\deploy.ps1" --mcp off\r\n')
         z.writestr('README.md',HELP)
         if (rt.APP_DIR/'AI4S_ARCHITECTURE.md').is_file():z.write(rt.APP_DIR/'AI4S_ARCHITECTURE.md','ARCHITECTURE.md')
         for name in ['AGENT_API.md','openapi.json']:
             if (rt.APP_DIR/name).is_file():z.write(rt.APP_DIR/name,name)
-        for name in ['docs/API.md','docs/DATA_MODEL.md','docs/USAGE.md','examples/http_client.py','examples/create_demo.py','examples/export_openapi.py']:
+        for name in ['docs/API.md','docs/DATA_MODEL.md','docs/USAGE.md','docs/DEPLOYMENT.md','examples/http_client.py','examples/create_demo.py','examples/export_openapi.py']:
             if (rt.APP_DIR/name).is_file():z.write(rt.APP_DIR/name,name)
     print(json.dumps({'archive':str(target),'bytes':target.stat().st_size,'includes_file_index':include_index},ensure_ascii=False))
 
 HELP='''# AI4S工作台
 
-需要 Python 3.9 或更新版本，无需 pip、Node.js 或数据库服务。
+需要 Python >=3.9,<4.0，无需 pip、Node.js 或数据库服务。自动复用已有解释器，不下载 Python。
 
 解压后运行：
 ```
-python -B desktop_server.py --config workspace.json --open
+python -B deploy.py --mcp off
 ```
-Windows 也可双击 start.cmd。只监听本机 127.0.0.1，端口见 workspace.json 的 port。
+Windows 也可双击 start.cmd；macOS/Linux 可运行 sh ./deploy.sh --mcp off。
+只监听本机 127.0.0.1，实际地址见脚本输出。启停与 Codex 注册见 docs/DEPLOYMENT.md。
 
 默认轻量包包含程序、项目资料、会话关联和个人安排，不包含科研数据或逐文件索引。
 原目录地址保留为引用。换电脑后在 workspace.json 的 path_mappings 中填写旧根目录和新根目录：
@@ -74,9 +75,8 @@ MCP 独立运行，无需先启动网页：
 python -B desktop_mcp.py --config workspace.json
 为本机生成 MCP 客户端配置：
 python desktop_manage.py mcp-config --config workspace.json
-Codex TOML 格式：
-python desktop_manage.py mcp-config --config workspace.json --format codex
-把输出合并到客户端配置中；不要手动向 MCP 进程的 stdout 写入日志。
+Codex 使用部署脚本的 --mcp required 参数，通过官方 CLI 注册；不要手工追加 TOML。
+JSON 输出供其他兼容客户端配置使用；不要手动向 MCP 进程的 stdout 写入日志。
 机器可读接口见 openapi.json，Agent 使用说明见 AGENT_API.md。
 完整接口说明见 docs/API.md，使用示例见 docs/USAGE.md。
 个人迁移包包含项目资料和会话关联；公开分享前应另建虚构演示工作区。

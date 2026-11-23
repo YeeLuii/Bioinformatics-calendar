@@ -8,7 +8,9 @@ Use MCP tools for project operations. `openapi.json` documents the versioned HTT
 
 ## MCP deployment
 
-Requires Python >=3.9; standard library only. No web server or SDK installation is required.
+Requires Python >=3.9,<4.0; standard library only. Reuse an installed compatible interpreter; do not require a specific minor version or download a runtime automatically.
+
+For deployment, run `deploy.ps1 --mcp required --no-open` on Windows (through PowerShell) or `sh ./deploy.sh --mcp required --no-open` on macOS/Linux. Read [deployment options](docs/DEPLOYMENT.md). The script performs runtime checks, workspace initialization, MCP validation, official Codex CLI registration, and HTTP startup. Report the exit code and JSON result; do not bypass a failed check by hand-editing config.toml. The registration adapter only uses `codex mcp add`, with byte backups and guarded rollback. No web server or SDK installation is required for standalone MCP:
 
 ```text
 python -B /absolute/path/desktop_mcp.py --config /absolute/path/workspace.json
@@ -25,7 +27,7 @@ python desktop_manage.py mcp-config --config workspace.json
 python desktop_manage.py mcp-config --config workspace.json --format codex
 ```
 
-The first produces a `mcpServers.ai4s` JSON fragment; the second produces `[mcp_servers.ai4s]` TOML. Both include absolute script, interpreter and workspace paths. Merge the fragment with the client's existing configuration, then reload that client. Generating a configuration does not register or enable the server automatically.
+The first produces a `mcpServers.ai4s` JSON fragment; the second produces reference TOML. Both include absolute script, interpreter and workspace paths. For Codex, use the deployment script instead of appending the fragment. Other clients may use their supported configuration-import mechanism. Reload the client after registration. Generating a fragment does not register or enable the server automatically.
 
 ## First deployment and importing existing work
 

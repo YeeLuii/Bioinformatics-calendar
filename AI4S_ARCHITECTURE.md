@@ -34,6 +34,9 @@ flowchart TD
 | `desktop_mcp.py` | MCP 生命周期、工具调用、文档资源 |
 | `desktop_navigation.py` | Windows/macOS/Linux 系统打开命令 |
 | `desktop_manage.py` | 初始化工作区、迁移打包、生成 MCP 客户端配置 |
+| `deploy.ps1` / `deploy.sh` | 发现并复用满足 Python >=3.9,<4.0 的解释器 |
+| `deploy.py` | 工作区部署、HTTP/MCP 自检、服务启停和运行记录 |
+| `deploy_codex.py` | 官方 CLI 注册适配、配置字节备份、校验和失败恢复 |
 | `desktop/app.js` | 项目资料、结果和文件查询视图 |
 | `desktop/board.js` | 拖放、文件夹、计划本 |
 | `desktop/details.js` | 结构化详情、项目编辑和会话关联 |

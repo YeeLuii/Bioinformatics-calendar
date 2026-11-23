@@ -20,3 +20,6 @@ desktop_threads.json
 desktop_data.json
 desktop_active.json
 refresh_status.json
+.deployment/
+.runtime/
+config.toml.ai4s-backup-*

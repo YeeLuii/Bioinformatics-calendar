@@ -139,7 +139,7 @@ call("/api/v1/projects/" + project_id, "PATCH", {
 
 ## 5. MCP 协议与部署
 
-入口：`python -B /absolute/path/desktop_mcp.py --config /absolute/path/workspace.json`。客户端配置通过 `desktop_manage.py mcp-config` 生成，JSON 输出使用 `mcpServers.ai4s`，Codex 输出使用 `[mcp_servers.ai4s]`。
+入口：`python -B /absolute/path/desktop_mcp.py --config /absolute/path/workspace.json`。Codex 使用 [部署脚本](DEPLOYMENT.md) 通过官方 CLI 注册，不手工追加 TOML。其他客户端的参考配置可通过 `desktop_manage.py mcp-config` 生成，JSON 输出使用 `mcpServers.ai4s`。
 
 传输为一行一个 UTF-8 JSON-RPC 消息。stdout 仅输出协议消息，日志写 stderr。支持协商版本：`2025-11-25`、`2025-06-18`、`2025-03-26`、`2024-11-05`。客户端先 initialize，再发 `notifications/initialized`。
 
@@ -170,6 +170,8 @@ call("/api/v1/projects/" + project_id, "PATCH", {
 | 方法 | 路径 | 请求 / 响应与用途 |
 |---|---|---|
 | GET | `/api/overview` | 合并项目、结果包、分类、计数、时间、`capabilities`、token、`refresh_running` |
+| GET | `/api/deploy-health` | 部署自检：`application,pid,app_dir,data_dir,workspace_root,deployment_id`；同样限制 Host |
+| POST | `/api/deploy-stop` | 部署启停：`{deployment_id}`，要求 token、合法来源和匹配的非空实例标识；成功返回 `{stopping:true}` 后关闭 HTTP；标识不符为 403，刷新运行中为 409 |
 | GET | `/api/openapi.json` | 实时 OpenAPI 文档 |
 | GET | `/api/agent-guide` | Agent Markdown 文档 |
 | GET | `/api/projects` | 原始人工覆盖存储 `{schema_version,revision,projects[]}` |

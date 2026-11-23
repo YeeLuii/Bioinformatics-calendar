@@ -24,22 +24,39 @@
 
 复制下面这句话交给 Agent：
 
-> 请在本机部署 https://github.com/YeeLuii/Bioinformatics-calendar ，按仓库文档准备 Python 环境和独立工作区，配置 MCP 时优先使用 `codex mcp add`，已有工作区继续使用原项目、日程和配置，验证网页与 MCP 可用后告知访问地址及启停方法，并询问我“是否要分析当前会话和项目的分析进度并同步到工作台？”，得到同意后确认范围并完成同步。
+> 请克隆或更新 https://github.com/YeeLuii/Bioinformatics-calendar ，按 docs/DEPLOYMENT.md 在 Windows 运行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\deploy.ps1 --mcp required --no-open`，在 macOS/Linux 运行 `sh ./deploy.sh --mcp required --no-open`；复用满足 Python >=3.9,<4.0 的已有环境，配置 MCP 只通过脚本调用官方 `codex mcp add`，不手工修改 config.toml，不自行安装运行时；根据脚本输出告知地址和启停方法，失败时报告原因，成功后询问我“是否要分析当前会话和项目的分析进度并同步到工作台？”，得到同意后按确认范围同步。
 
 这里的“已有工作区”指已经使用过的 AI4S 工作区。首次部署时会创建新工作区；再次部署时保留其中的项目、日程、会话关联和设置，不会因此自动导入 Codex 的全部会话。首次同步的询问由部署 Agent 执行，当前网页启动时没有自动扫描或导入弹窗。
 
-### 手动部署
+### 运行部署脚本
 
-需要 Python 3.9 或更新版本和现代浏览器。运行时只用 Python 标准库；无需 pip、npm、数据库服务或前端构建。
+需要 **Python >=3.9,<4.0** 和现代浏览器。脚本检查已有解释器及所需标准库，不要求特定小版本，不下载 Python，也不默认创建虚拟环境。工作台本身无需 pip、npm、数据库服务或前端构建；注册 Codex MCP 另外需要可用的 Codex CLI。
 
 ```bash
 git clone https://github.com/YeeLuii/Bioinformatics-calendar.git
 cd Bioinformatics-calendar
-python desktop_manage.py init ../ai4s-workspace
-python -B desktop_server.py --config ../ai4s-workspace/workspace.json --open
 ```
 
-浏览器打开 <http://127.0.0.1:8828>。在页面点击“新建项目”，填写项目内容和目录，再将卡片拖到合适位置。停止服务时在启动它的终端按 `Ctrl+C`。
+Windows：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\deploy.ps1 --mcp required
+```
+
+macOS / Linux：
+
+```sh
+sh ./deploy.sh --mcp required
+```
+
+脚本创建或复用仓库同级的 ai4s-workspace，验证网页和 MCP，并打开浏览器。端口被占用时选择空闲端口，以输出地址为准。仅需要网页时使用 `--mcp off`。在页面点击“新建项目”，填写项目内容和目录，再将卡片拖到合适位置。
+
+```bash
+python -B deploy.py status
+python -B deploy.py stop
+```
+
+自定义工作区时，启停都带相同的 `--workspace PATH`。更新代码后加 `--restart` 重新启动。完整参数、配置保护和失败处理见 [部署说明](docs/DEPLOYMENT.md)。
 
 应用代码与个人工作区分开。研究数据保持原位；项目归档、卡片摆放和文件夹操作只修改工作区元数据。
 
@@ -89,20 +106,19 @@ python -B desktop_server.py --config ../ai4s-demo/workspace.json --open
 | 文档 | 内容 |
 |---|---|
 | [完整接口说明](docs/API.md) | HTTP、MCP、鉴权、字段、错误、版本冲突、桌面与文件接口 |
+| [自动部署与兼容性](docs/DEPLOYMENT.md) | 环境检查、脚本参数、启停、Codex 配置备份与失败恢复 |
 | [Agent 操作说明](AGENT_API.md) | Agent 调用顺序、工具边界和恢复方式 |
 | [OpenAPI 3.1](openapi.json) | 稳定 v1 项目接口及 10 个 MCP 工具的输入输出 Schema |
 | [架构与部署](AI4S_ARCHITECTURE.md) | 模块职责、配置、迁移、打包及扩展方式 |
 | [数据接入约定](docs/DATA_MODEL.md) | 项目、结果包、卡片、待办及可选文件索引 |
 
-MCP 不需要先启动网页：
+MCP 不需要先启动网页。Codex 注册由部署脚本完成；其他客户端可生成配置参考：
 
 ```bash
 python desktop_manage.py mcp-config --config ../ai4s-workspace/workspace.json
-# Codex TOML 格式
-python desktop_manage.py mcp-config --config ../ai4s-workspace/workspace.json --format codex
 ```
 
-将生成的片段合并到对应客户端配置并重载。它会通过 stdio 启动 `desktop_mcp.py`；不会自动注册到客户端。迁移后重新生成配置，避免沿用旧电脑的绝对路径。
+JSON 片段供支持 mcpServers 格式的客户端使用。生成片段本身不会注册服务；客户端通过 stdio 启动 `desktop_mcp.py`。Codex 请使用部署脚本，避免手工编辑 TOML。迁移后重新运行脚本，并根据需要明确替换旧的同名注册。
 
 ## 提问与贡献
 
@@ -115,6 +131,6 @@ python desktop_manage.py mcp-config --config ../ai4s-workspace/workspace.json --
 python -B -m unittest discover -p "test_*.py" -v
 ```
 
-测试覆盖空工作区、路径映射、日程与布局保存、项目增改归档、真实 MCP 通信、跨进程版本冲突、HTTP 和迁移包。GitHub Actions 在 Windows/Linux 与 Python 3.9/3.12 上运行。Windows 本机导航已实际验证；其他系统的目录打开命令仍需对应环境验证。
+测试覆盖空工作区、路径映射、日程与布局保存、项目增改归档、真实 MCP 通信、跨进程版本冲突、HTTP、迁移包及部署启动、重复运行和配置恢复。GitHub Actions 配置 Windows/Linux 与 Python 3.9/3.12/3.14 的测试矩阵；注册测试使用模拟 CLI，不改动真实 Codex 配置。Windows 本机导航已实际验证；macOS 和其他系统的目录打开命令仍需对应环境验证。
 
 当前面向单用户本地工作。只监听 `127.0.0.1`，没有多用户权限、远程 MCP 或在线聊天代理。可保存多个分析项目，但不承担集群作业调度。Codex 跳转需要本机安装客户端并能访问目标会话。

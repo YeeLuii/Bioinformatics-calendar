@@ -12,6 +12,7 @@ from desktop_runtime import read_json as jread
 
 HERE=runtime.DATA_DIR;ROOT=runtime.WORKSPACE_ROOT
 WEB=runtime.APP_DIR/'desktop';PORT=8828;TOKEN=secrets.token_urlsafe(32);REFRESH=None;MUTEX=threading.Lock()
+DEPLOYMENT_ID=''
 def connect():
     name=jread(HERE/'desktop_active.json',{}).get('db','');p=HERE/name
     if not name:return None
@@ -46,6 +47,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not self.valid_host():return self.send({'error':'Host rejected'},403)
         u=urllib.parse.urlsplit(self.path);a=urllib.parse.parse_qs(u.query);v=lambda k,d='':a.get(k,[d])[0]
         try:
+            if u.path=='/api/deploy-health':return self.send({'application':'ai4s-workbench','pid':os.getpid(),'app_dir':str(runtime.APP_DIR),'data_dir':str(HERE),'workspace_root':str(ROOT),'deployment_id':DEPLOYMENT_ID})
             if u.path=='/api/openapi.json':return self.send(contract.openapi())
             if u.path=='/api/agent-guide':return self.file(runtime.APP_DIR/'AGENT_API.md')
             public=contract.route('get',u.path)
@@ -114,6 +116,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if not self.valid_host() or self.headers.get('X-Desk-Token')!=TOKEN or self.headers.get('Origin') not in {None,f'http://127.0.0.1:{PORT}',f'http://localhost:{PORT}'}:
                 return self.send({'error':'请求来源不匹配'},403)
             obj=json.loads(body or b'{}')
+            if self.path=='/api/deploy-stop':
+                if not DEPLOYMENT_ID or obj.get('deployment_id')!=DEPLOYMENT_ID:return self.send({'error':'部署实例不匹配'},403)
+                if REFRESH and REFRESH.poll() is None:return self.send({'error':'文件刷新正在运行'},409)
+                self.send({'stopping':True})
+                threading.Thread(target=self.server.shutdown,daemon=True).start()
+                return
             public=contract.route(self.command,urllib.parse.urlsplit(self.path).path)
             if public:
                 operation,args=public
@@ -151,8 +159,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 if __name__=='__main__':
     runtime.configure_console()
-    parser=argparse.ArgumentParser(description='AI4S工作台');parser.add_argument('--port',type=int);parser.add_argument('--config');parser.add_argument('--data-dir');parser.add_argument('--open',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser(description='AI4S工作台');parser.add_argument('--port',type=int);parser.add_argument('--config');parser.add_argument('--data-dir');parser.add_argument('--open',action='store_true');parser.add_argument('--deployment-id',default='');args=parser.parse_args()
+    DEPLOYMENT_ID=args.deployment_id
     runtime.configure(args.config,args.data_dir);HERE=runtime.DATA_DIR;ROOT=runtime.WORKSPACE_ROOT;PORT=args.port or runtime.CONFIG.get('port',8828)
     server=http.server.ThreadingHTTPServer(('127.0.0.1',PORT),Handler)
     if args.open:webbrowser.open(f'http://127.0.0.1:{PORT}')
-    print(f'AI4S: http://127.0.0.1:{PORT}',flush=True);server.serve_forever()
+    print(f'AI4S: http://127.0.0.1:{PORT}',flush=True)
+    try:server.serve_forever()
+    finally:server.server_close()
