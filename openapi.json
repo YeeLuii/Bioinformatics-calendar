@@ -1,0 +1,3102 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI4S Workspace API",
+    "version": "1.0.0",
+    "description": "本机单用户研究项目管理。写入需要 X-Desk-Token；从 GET /api/overview 读取当前进程令牌。研究文件不会被修改。"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:{port}",
+      "variables": {
+        "port": {
+          "default": "8828"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/api/v1/projects": {
+      "get": {
+        "operationId": "projects_list",
+        "summary": "列出研究项目；可包含已归档项目。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    },
+                    "projects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                          },
+                          "name": {
+                            "type": "string",
+                            "maxLength": 12000,
+                            "description": "项目名称"
+                          },
+                          "summary": {
+                            "type": "string",
+                            "maxLength": 12000,
+                            "description": "研究问题与项目概述"
+                          },
+                          "status": {
+                            "type": "string",
+                            "maxLength": 12000,
+                            "description": "当前进度"
+                          },
+                          "current_version": {
+                            "type": "string",
+                            "maxLength": 12000,
+                            "description": "当前采用版本"
+                          },
+                          "scope": {
+                            "type": "string",
+                            "maxLength": 12000,
+                            "description": "结果适用范围与限制"
+                          },
+                          "todo": {
+                            "type": "string",
+                            "maxLength": 12000,
+                            "description": "待完成事项"
+                          },
+                          "local": {
+                            "type": "string",
+                            "maxLength": 12000,
+                            "description": "本地目录，支持工作区相对路径"
+                          },
+                          "remote": {
+                            "type": "string",
+                            "maxLength": 12000,
+                            "description": "服务器目录；不涉及服务器时留空"
+                          },
+                          "ssh_alias": {
+                            "type": "string",
+                            "maxLength": 12000,
+                            "description": "SSH 主机别名；不存放密码"
+                          },
+                          "archived": {
+                            "type": "boolean"
+                          },
+                          "counts": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "integer"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ],
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "projects"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false
+          }
+        ],
+        "security": []
+      },
+      "post": {
+        "operationId": "project_create",
+        "summary": "添加项目登记；不创建研究目录或启动分析。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    },
+                    "project": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "项目名称"
+                        },
+                        "summary": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "研究问题与项目概述"
+                        },
+                        "status": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前进度"
+                        },
+                        "current_version": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前采用版本"
+                        },
+                        "scope": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "结果适用范围与限制"
+                        },
+                        "todo": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "待完成事项"
+                        },
+                        "local": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "本地目录，支持工作区相对路径"
+                        },
+                        "remote": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "服务器目录；不涉及服务器时留空"
+                        },
+                        "ssh_alias": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "SSH 主机别名；不存放密码"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": true
+                    },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "maxLength": 12000
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "codex"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "project",
+                    "threads"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [],
+        "security": [
+          {
+            "DeskToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "project": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                      },
+                      "name": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "项目名称"
+                      },
+                      "summary": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "研究问题与项目概述"
+                      },
+                      "status": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "当前进度"
+                      },
+                      "current_version": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "当前采用版本"
+                      },
+                      "scope": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "结果适用范围与限制"
+                      },
+                      "todo": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "待完成事项"
+                      },
+                      "local": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "本地目录，支持工作区相对路径"
+                      },
+                      "remote": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "服务器目录；不涉及服务器时留空"
+                      },
+                      "ssh_alias": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "SSH 主机别名；不存放密码"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "expected_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                  }
+                },
+                "required": [
+                  "project",
+                  "expected_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}": {
+      "get": {
+        "operationId": "project_get",
+        "summary": "读取项目概述、地址、版本、关联会话和 revision。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    },
+                    "project": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "项目名称"
+                        },
+                        "summary": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "研究问题与项目概述"
+                        },
+                        "status": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前进度"
+                        },
+                        "current_version": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前采用版本"
+                        },
+                        "scope": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "结果适用范围与限制"
+                        },
+                        "todo": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "待完成事项"
+                        },
+                        "local": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "本地目录，支持工作区相对路径"
+                        },
+                        "remote": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "服务器目录；不涉及服务器时留空"
+                        },
+                        "ssh_alias": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "SSH 主机别名；不存放密码"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": true
+                    },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "maxLength": 12000
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "codex"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "project",
+                    "threads"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+            }
+          }
+        ],
+        "security": []
+      },
+      "patch": {
+        "operationId": "project_update",
+        "summary": "局部修改项目字段；未提供的字段保留。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    },
+                    "project": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "项目名称"
+                        },
+                        "summary": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "研究问题与项目概述"
+                        },
+                        "status": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前进度"
+                        },
+                        "current_version": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前采用版本"
+                        },
+                        "scope": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "结果适用范围与限制"
+                        },
+                        "todo": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "待完成事项"
+                        },
+                        "local": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "本地目录，支持工作区相对路径"
+                        },
+                        "remote": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "服务器目录；不涉及服务器时留空"
+                        },
+                        "ssh_alias": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "SSH 主机别名；不存放密码"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": true
+                    },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "maxLength": 12000
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "codex"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "project",
+                    "threads"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "DeskToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patch": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "项目名称"
+                      },
+                      "summary": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "研究问题与项目概述"
+                      },
+                      "status": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "当前进度"
+                      },
+                      "current_version": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "当前采用版本"
+                      },
+                      "scope": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "结果适用范围与限制"
+                      },
+                      "todo": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "待完成事项"
+                      },
+                      "local": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "本地目录，支持工作区相对路径"
+                      },
+                      "remote": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "服务器目录；不涉及服务器时留空"
+                      },
+                      "ssh_alias": {
+                        "type": "string",
+                        "maxLength": 12000,
+                        "description": "SSH 主机别名；不存放密码"
+                      }
+                    },
+                    "required": [],
+                    "additionalProperties": false
+                  },
+                  "expected_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                  }
+                },
+                "required": [
+                  "patch",
+                  "expected_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/archive": {
+      "post": {
+        "operationId": "project_archive",
+        "summary": "从活跃项目列表移出，可恢复；源文件、会话和卡片布局保留。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    },
+                    "project": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "项目名称"
+                        },
+                        "summary": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "研究问题与项目概述"
+                        },
+                        "status": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前进度"
+                        },
+                        "current_version": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前采用版本"
+                        },
+                        "scope": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "结果适用范围与限制"
+                        },
+                        "todo": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "待完成事项"
+                        },
+                        "local": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "本地目录，支持工作区相对路径"
+                        },
+                        "remote": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "服务器目录；不涉及服务器时留空"
+                        },
+                        "ssh_alias": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "SSH 主机别名；不存放密码"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": true
+                    },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "maxLength": 12000
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "codex"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "project",
+                    "threads"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "DeskToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expected_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                  }
+                },
+                "required": [
+                  "expected_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/restore": {
+      "post": {
+        "operationId": "project_restore",
+        "summary": "恢复归档的项目及其原有桌面卡片。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    },
+                    "project": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "项目名称"
+                        },
+                        "summary": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "研究问题与项目概述"
+                        },
+                        "status": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前进度"
+                        },
+                        "current_version": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前采用版本"
+                        },
+                        "scope": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "结果适用范围与限制"
+                        },
+                        "todo": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "待完成事项"
+                        },
+                        "local": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "本地目录，支持工作区相对路径"
+                        },
+                        "remote": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "服务器目录；不涉及服务器时留空"
+                        },
+                        "ssh_alias": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "SSH 主机别名；不存放密码"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": true
+                    },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "maxLength": 12000
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "codex"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "project",
+                    "threads"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "DeskToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expected_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                  }
+                },
+                "required": [
+                  "expected_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project_id}/summary": {
+      "get": {
+        "operationId": "project_summarize",
+        "summary": "汇总已登记研究内容、进度、版本、待办与来源时间；不重跑分析，不生成未经登记的科学结论。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    },
+                    "project": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "项目名称"
+                        },
+                        "summary": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "研究问题与项目概述"
+                        },
+                        "status": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前进度"
+                        },
+                        "current_version": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "当前采用版本"
+                        },
+                        "scope": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "结果适用范围与限制"
+                        },
+                        "todo": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "待完成事项"
+                        },
+                        "local": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "本地目录，支持工作区相对路径"
+                        },
+                        "remote": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "服务器目录；不涉及服务器时留空"
+                        },
+                        "ssh_alias": {
+                          "type": "string",
+                          "maxLength": 12000,
+                          "description": "SSH 主机别名；不存放密码"
+                        },
+                        "archived": {
+                          "type": "boolean"
+                        },
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": true
+                    },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "maxLength": 12000
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "codex"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "summary": {
+                      "type": "string"
+                    },
+                    "basis": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "const": "registered_metadata"
+                        },
+                        "index_observed_at": {
+                          "type": "string"
+                        },
+                        "generated_at": {
+                          "type": "string"
+                        },
+                        "note": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "index_observed_at",
+                        "generated_at",
+                        "note"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "project",
+                    "threads",
+                    "summary",
+                    "basis",
+                    "results"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+            }
+          }
+        ],
+        "security": []
+      }
+    },
+    "/api/v1/projects/{project_id}/threads": {
+      "get": {
+        "operationId": "project_threads_get",
+        "summary": "读取项目会话关联及独立的关联 revision。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    },
+                    "project_id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "maxLength": 12000
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "codex"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "project_id",
+                    "threads"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+            }
+          }
+        ],
+        "security": []
+      },
+      "put": {
+        "operationId": "project_threads_set",
+        "summary": "替换项目会话关联；不向会话发送消息。expected_revision 使用关联列表的 revision。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    },
+                    "project_id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "threads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                          },
+                          "title": {
+                            "type": "string",
+                            "maxLength": 12000
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "codex"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "project_id",
+                    "threads"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "DeskToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "threads": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                        },
+                        "title": {
+                          "type": "string",
+                          "maxLength": 12000
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "codex"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "maxItems": 100
+                  },
+                  "expected_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                  }
+                },
+                "required": [
+                  "threads",
+                  "expected_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspace": {
+      "get": {
+        "operationId": "workspace_status",
+        "summary": "查看工作区路径、协议版本及可用功能。",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data_dir": {
+                      "type": "string"
+                    },
+                    "workspace_root": {
+                      "type": "string"
+                    },
+                    "capabilities": {
+                      "type": "object"
+                    },
+                    "schema_version": {
+                      "type": "integer"
+                    },
+                    "mcp_protocol": {
+                      "type": "string"
+                    },
+                    "project_revision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+                    }
+                  },
+                  "required": [
+                    "data_dir",
+                    "workspace_root",
+                    "capabilities",
+                    "schema_version",
+                    "mcp_protocol",
+                    "project_revision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数无效"
+          },
+          "403": {
+            "description": "写入令牌或来源无效"
+          },
+          "404": {
+            "description": "项目不存在"
+          },
+          "409": {
+            "description": "revision 冲突，重新读取后再提交"
+          }
+        },
+        "parameters": [],
+        "security": []
+      }
+    },
+    "/api/overview": {
+      "get": {
+        "operationId": "getBootstrap",
+        "summary": "浏览器启动信息与当前进程的临时写入令牌 token",
+        "responses": {
+          "200": {
+            "description": "操作结果（包含 revision 的项目元数据）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "DeskToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Desk-Token"
+      }
+    },
+    "schemas": {
+      "ProjectInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "项目名称"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "研究问题与项目概述"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "当前进度"
+          },
+          "current_version": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "当前采用版本"
+          },
+          "scope": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "结果适用范围与限制"
+          },
+          "todo": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "待完成事项"
+          },
+          "local": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "本地目录，支持工作区相对路径"
+          },
+          "remote": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "服务器目录；不涉及服务器时留空"
+          },
+          "ssh_alias": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "SSH 主机别名；不存放密码"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "ProjectPatch": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "项目名称"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "研究问题与项目概述"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "当前进度"
+          },
+          "current_version": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "当前采用版本"
+          },
+          "scope": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "结果适用范围与限制"
+          },
+          "todo": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "待完成事项"
+          },
+          "local": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "本地目录，支持工作区相对路径"
+          },
+          "remote": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "服务器目录；不涉及服务器时留空"
+          },
+          "ssh_alias": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "SSH 主机别名；不存放密码"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "ThreadLink": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 12000
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "codex"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      "ProjectRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "项目名称"
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "研究问题与项目概述"
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "当前进度"
+          },
+          "current_version": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "当前采用版本"
+          },
+          "scope": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "结果适用范围与限制"
+          },
+          "todo": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "待完成事项"
+          },
+          "local": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "本地目录，支持工作区相对路径"
+          },
+          "remote": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "服务器目录；不涉及服务器时留空"
+          },
+          "ssh_alias": {
+            "type": "string",
+            "maxLength": 12000,
+            "description": "SSH 主机别名；不存放密码"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": true
+      }
+    }
+  },
+  "x-ai4s-mcp-protocol": "2025-11-25",
+  "x-ai4s-tool-contracts": [
+    {
+      "name": "projects_list",
+      "description": "列出研究项目；可包含已归档项目。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "include_archived": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 12000,
+                  "description": "项目名称"
+                },
+                "summary": {
+                  "type": "string",
+                  "maxLength": 12000,
+                  "description": "研究问题与项目概述"
+                },
+                "status": {
+                  "type": "string",
+                  "maxLength": 12000,
+                  "description": "当前进度"
+                },
+                "current_version": {
+                  "type": "string",
+                  "maxLength": 12000,
+                  "description": "当前采用版本"
+                },
+                "scope": {
+                  "type": "string",
+                  "maxLength": 12000,
+                  "description": "结果适用范围与限制"
+                },
+                "todo": {
+                  "type": "string",
+                  "maxLength": 12000,
+                  "description": "待完成事项"
+                },
+                "local": {
+                  "type": "string",
+                  "maxLength": 12000,
+                  "description": "本地目录，支持工作区相对路径"
+                },
+                "remote": {
+                  "type": "string",
+                  "maxLength": 12000,
+                  "description": "服务器目录；不涉及服务器时留空"
+                },
+                "ssh_alias": {
+                  "type": "string",
+                  "maxLength": 12000,
+                  "description": "SSH 主机别名；不存放密码"
+                },
+                "archived": {
+                  "type": "boolean"
+                },
+                "counts": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "projects"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "project_get",
+      "description": "读取项目概述、地址、版本、关联会话和 revision。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "项目名称"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "研究问题与项目概述"
+              },
+              "status": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前进度"
+              },
+              "current_version": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前采用版本"
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "结果适用范围与限制"
+              },
+              "todo": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "待完成事项"
+              },
+              "local": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "本地目录，支持工作区相对路径"
+              },
+              "remote": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "服务器目录；不涉及服务器时留空"
+              },
+              "ssh_alias": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "SSH 主机别名；不存放密码"
+              },
+              "archived": {
+                "type": "boolean"
+              },
+              "counts": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 12000
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "codex"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "project",
+          "threads"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "project_create",
+      "description": "添加项目登记；不创建研究目录或启动分析。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "项目名称"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "研究问题与项目概述"
+              },
+              "status": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前进度"
+              },
+              "current_version": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前采用版本"
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "结果适用范围与限制"
+              },
+              "todo": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "待完成事项"
+              },
+              "local": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "本地目录，支持工作区相对路径"
+              },
+              "remote": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "服务器目录；不涉及服务器时留空"
+              },
+              "ssh_alias": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "SSH 主机别名；不存放密码"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          }
+        },
+        "required": [
+          "project",
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "项目名称"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "研究问题与项目概述"
+              },
+              "status": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前进度"
+              },
+              "current_version": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前采用版本"
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "结果适用范围与限制"
+              },
+              "todo": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "待完成事项"
+              },
+              "local": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "本地目录，支持工作区相对路径"
+              },
+              "remote": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "服务器目录；不涉及服务器时留空"
+              },
+              "ssh_alias": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "SSH 主机别名；不存放密码"
+              },
+              "archived": {
+                "type": "boolean"
+              },
+              "counts": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 12000
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "codex"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "project",
+          "threads"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "project_update",
+      "description": "局部修改项目字段；未提供的字段保留。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          },
+          "patch": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "项目名称"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "研究问题与项目概述"
+              },
+              "status": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前进度"
+              },
+              "current_version": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前采用版本"
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "结果适用范围与限制"
+              },
+              "todo": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "待完成事项"
+              },
+              "local": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "本地目录，支持工作区相对路径"
+              },
+              "remote": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "服务器目录；不涉及服务器时留空"
+              },
+              "ssh_alias": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "SSH 主机别名；不存放密码"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          }
+        },
+        "required": [
+          "project_id",
+          "patch",
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "项目名称"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "研究问题与项目概述"
+              },
+              "status": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前进度"
+              },
+              "current_version": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前采用版本"
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "结果适用范围与限制"
+              },
+              "todo": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "待完成事项"
+              },
+              "local": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "本地目录，支持工作区相对路径"
+              },
+              "remote": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "服务器目录；不涉及服务器时留空"
+              },
+              "ssh_alias": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "SSH 主机别名；不存放密码"
+              },
+              "archived": {
+                "type": "boolean"
+              },
+              "counts": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 12000
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "codex"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "project",
+          "threads"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "project_archive",
+      "description": "从活跃项目列表移出，可恢复；源文件、会话和卡片布局保留。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          }
+        },
+        "required": [
+          "project_id",
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "项目名称"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "研究问题与项目概述"
+              },
+              "status": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前进度"
+              },
+              "current_version": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前采用版本"
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "结果适用范围与限制"
+              },
+              "todo": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "待完成事项"
+              },
+              "local": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "本地目录，支持工作区相对路径"
+              },
+              "remote": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "服务器目录；不涉及服务器时留空"
+              },
+              "ssh_alias": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "SSH 主机别名；不存放密码"
+              },
+              "archived": {
+                "type": "boolean"
+              },
+              "counts": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 12000
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "codex"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "project",
+          "threads"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "project_restore",
+      "description": "恢复归档的项目及其原有桌面卡片。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          }
+        },
+        "required": [
+          "project_id",
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "项目名称"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "研究问题与项目概述"
+              },
+              "status": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前进度"
+              },
+              "current_version": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前采用版本"
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "结果适用范围与限制"
+              },
+              "todo": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "待完成事项"
+              },
+              "local": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "本地目录，支持工作区相对路径"
+              },
+              "remote": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "服务器目录；不涉及服务器时留空"
+              },
+              "ssh_alias": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "SSH 主机别名；不存放密码"
+              },
+              "archived": {
+                "type": "boolean"
+              },
+              "counts": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 12000
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "codex"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "project",
+          "threads"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "project_summarize",
+      "description": "汇总已登记研究内容、进度、版本、待办与来源时间；不重跑分析，不生成未经登记的科学结论。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          },
+          "project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "项目名称"
+              },
+              "summary": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "研究问题与项目概述"
+              },
+              "status": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前进度"
+              },
+              "current_version": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "当前采用版本"
+              },
+              "scope": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "结果适用范围与限制"
+              },
+              "todo": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "待完成事项"
+              },
+              "local": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "本地目录，支持工作区相对路径"
+              },
+              "remote": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "服务器目录；不涉及服务器时留空"
+              },
+              "ssh_alias": {
+                "type": "string",
+                "maxLength": 12000,
+                "description": "SSH 主机别名；不存放密码"
+              },
+              "archived": {
+                "type": "boolean"
+              },
+              "counts": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 12000
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "codex"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "summary": {
+            "type": "string"
+          },
+          "basis": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "registered_metadata"
+              },
+              "index_observed_at": {
+                "type": "string"
+              },
+              "generated_at": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "index_observed_at",
+              "generated_at",
+              "note"
+            ],
+            "additionalProperties": false
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "project",
+          "threads",
+          "summary",
+          "basis",
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "project_threads_get",
+      "description": "读取项目会话关联及独立的关联 revision。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          }
+        },
+        "required": [
+          "project_id"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          },
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 12000
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "codex"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "project_id",
+          "threads"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "project_threads_set",
+      "description": "替换项目会话关联；不向会话发送消息。expected_revision 使用关联列表的 revision。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 12000
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "codex"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 100
+          },
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          }
+        },
+        "required": [
+          "project_id",
+          "threads",
+          "expected_revision"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          },
+          "project_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          },
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$"
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 12000
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "codex"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "project_id",
+          "threads"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "workspace_status",
+      "description": "查看工作区路径、协议版本及可用功能。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "data_dir": {
+            "type": "string"
+          },
+          "workspace_root": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "object"
+          },
+          "schema_version": {
+            "type": "integer"
+          },
+          "mcp_protocol": {
+            "type": "string"
+          },
+          "project_revision": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。"
+          }
+        },
+        "required": [
+          "data_dir",
+          "workspace_root",
+          "capabilities",
+          "schema_version",
+          "mcp_protocol",
+          "project_revision"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}
