@@ -27,6 +27,18 @@ python desktop_manage.py mcp-config --config workspace.json --format codex
 
 The first produces a `mcpServers.ai4s` JSON fragment; the second produces `[mcp_servers.ai4s]` TOML. Both include absolute script, interpreter and workspace paths. Merge the fragment with the client's existing configuration, then reload that client. Generating a configuration does not register or enable the server automatically.
 
+## First deployment and importing existing work
+
+After deployment is verified, ask the user: “是否要分析当前会话和项目的分析进度并同步到工作台？” This is a deployment-agent interaction, not a built-in startup dialog. Starting the application loads registered metadata; it does not enumerate Codex chats or infer live task progress.
+
+If the user agrees, confirm the source scope: the current conversation, selected accessible conversations, and/or specified project directories. If the user already supplied an explicit scope, use it without asking again. Read authorized source material through the capabilities actually available in the current client. When chat-reading tools are unavailable, use the current conversation and user-provided project documentation instead of claiming to have inspected other chats.
+
+Read `projects_list` before importing. Match work to existing stable project IDs; multiple chats can belong to one project. Use `project_create` or a narrow `project_update` patch to register the research question, current progress, adopted version, result scope, local/server locations and next steps. Record source references and the observation date in the overview text; label uncertain progress explicitly. Preserve unrelated metadata and the existing calendar. Register known chat UUIDs separately with `project_threads_set`, retaining existing links.
+
+Report imported/updated projects, source coverage and unresolved items. New MCP-created projects appear in the project list; an existing saved board requires the user to select “加入桌面” in project details. Project-level `todo` is summary text, not a dated calendar entry. The 10 project MCP tools do not create calendar todos.
+
+For later synchronization, read new source evidence before applying changes. `project_summarize` only summarizes stored metadata and cannot discover new progress. Continuous synchronization requires a separately configured adapter or another explicit user request.
+
 ## Tool inventory
 
 | Tool | Inputs | Side effects |
