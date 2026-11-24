@@ -91,6 +91,20 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(self.call('/api/openapi.json')[1], contract.openapi())
 
 
+    def test_address_http_contract_and_navigation(self):
+        auth = {'X-Desk-Token': self.token}
+        payload = {'expected_revision': 0, 'project': {'id': 'study', 'name': 'Study', 'addresses': [
+            {'id': 'docs', 'kind': 'url', 'path': 'https://example.org/docs'},
+            {'id': 'local', 'kind': 'local', 'path': '.'},
+            {'id': 'remote', 'kind': 'server', 'path': '/srv/results', 'ssh_alias': 'remote-two'}
+        ]}}
+        self.assertEqual(self.call('/api/v1/projects', 'POST', payload, auth)[0], 200)
+        self.assertEqual(self.call('/api/item?id=project:study:address:remote')[1]['ssh_alias'], 'remote-two')
+        self.assertEqual(self.call('/api/folder?id=project:study:address:local')[0], 200)
+        self.assertEqual(self.call('/api/open-folder', 'POST', {'id': 'project:study:address:docs'}, auth)[0], 400)
+        self.assertEqual(self.call('/api/open-folder', 'POST', {'id': 'project:study:address:unknown'}, auth)[0], 400)
+
+
 class ContractTests(unittest.TestCase):
     def test_cli_output_is_utf8_under_legacy_windows_encoding(self):
         env = {**os.environ, 'PYTHONIOENCODING': 'cp1252'}

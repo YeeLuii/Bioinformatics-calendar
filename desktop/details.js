@@ -4,7 +4,7 @@ const detailFields=items=>`<dl class="detail-fields">${items.filter(([,v])=>v).m
 const overviewSection=body=>`<section class="detail-section"><h3>项目概述</h3>${body}</section>`;
 const addressSection=body=>`<section class="detail-section"><h3>项目地址</h3>${body}</section>`;
 async function projectLocations(p){
- const ids=[p.local?p.local_id:'',p.remote?p.remote_id:''].filter(Boolean);
+ const ids=[p.local?p.local_id:'',p.remote?p.remote_id:'',...(p.addresses||[]).map(a=>'project:'+p.id+':address:'+a.id)].filter(Boolean);
  return (await Promise.all(ids.map(id=>api('/api/item?id='+encodeURIComponent(id)).catch(()=>null)))).filter(Boolean);
 }
 function chatArea(){return '<div id="project-chats" class="project-chats"></div>';}
@@ -18,7 +18,7 @@ async function wireProjectChats(p){
 }
 async function showProject(id){try{
  const p=projectBy(id),locations=await projectLocations(p);
- drawer(`<h2>${esc(p.name)}</h2>${overviewSection(detailFields([['研究内容',p.summary],['当前进度',p.status],['采用版本',p.current_version],['结果适用范围',p.scope],['待完成事项',p.todo]])+`<div class="actions"><button class="button secondary" id="edit-project">编辑概述与地址</button>${data.capabilities.file_index?'<button class="button secondary" id="project-files">查看文件</button>':''}<button class="button secondary" id="enter-project">查看结果</button>${boardReady&&!board.cards.some(c=>c.type==='project'&&c.target===id)?'<button class="button secondary" id="add-project-card">加入桌面</button>':''}</div>`)}${addressSection(locations.map(l=>pathHtml(l,l.host==='server'?'服务器目录':'本地目录')).join('')+(!locations.length?'<p class="detail-muted">尚未登记目录</p>':'')+chatArea())}`);
+ drawer(`<h2>${esc(p.name)}</h2>${overviewSection(detailFields([['研究内容',p.summary],['当前进度',p.status],['采用版本',p.current_version],['结果适用范围',p.scope],['待完成事项',p.todo]])+`<div class="actions"><button class="button secondary" id="edit-project">编辑概述与地址</button>${data.capabilities.file_index?'<button class="button secondary" id="project-files">查看文件</button>':''}<button class="button secondary" id="enter-project">查看结果</button>${boardReady&&!board.cards.some(c=>c.type==='project'&&c.target===id)?'<button class="button secondary" id="add-project-card">加入桌面</button>':''}</div>`)}${addressSection(locations.map(l=>pathHtml(l,l.label||(l.host==='server'?'服务器目录':l.host==='url'?'网页链接':'本地目录'))).join('')+(!locations.length?'<p class="detail-muted">尚未登记地址</p>':'')+chatArea())}`);
  $('#edit-project').onclick=()=>editProject(id);
  $('#enter-project').onclick=()=>{close();selectProject(id);setView('desk');};
  if($('#project-files'))$('#project-files').onclick=()=>{close();selectProject(id);$('#category').value='';setView('files');};
@@ -55,7 +55,24 @@ async function addProjectCard(p){
 async function editProject(id=''){try{
  const existing=projectBy(id),p=existing||{id:'project-'+crypto.randomUUID()},saved=await api('/api/projects');
  const input=(key,label,area=false)=>`<label>${label}${area?`<textarea name="${key}" rows="3">${esc(p[key]||'')}</textarea>`:`<input name="${key}" value="${esc(p[key]||'')}" ${key==='name'?'required':''}>`}</label>`;
- drawer(`<h2>${existing?'编辑项目':'新建项目'}</h2><form id="project-form" class="desk-form"><h3>项目概述</h3>${input('name','项目名称')}${input('summary','研究内容',true)}${input('status','当前进度')}${input('current_version','采用版本')}${input('scope','结果适用范围',true)}${input('todo','待完成事项',true)}<h3>项目地址</h3>${input('local','本地目录（可留空或使用工作区相对路径）')}${input('remote','服务器目录（可留空）')}${input('ssh_alias','SSH 主机别名（可留空）')}<div class="actions"><button class="button primary" type="submit">保存项目</button><button class="button secondary" type="button" id="project-cancel">取消</button></div></form>`);
+ const prompt='请使用 ai4s项目桌面整理【填写项目名称、相关会话或目录】。先核对已有项目，再整理研究内容、当前进度、采用版本、结果适用范围和待办，登记所有本地目录、服务器及网页地址，并关联相关会话、加入项目桌面。注明信息来源和整理日期，无法确认的内容标为待核实，保留其他项目和日程。';
+ const primary=(key,label,kind)=>`<div class="primary-address"><label for="address-${key}">${label}</label><div class="address-input-row"><input id="address-${key}" name="${key}" value="${esc(p[key]||'')}" placeholder="${kind==='local'?'本地目录或工作区相对路径':'/srv/project/results'}"><button type="button" class="button secondary address-add" data-add-address="${kind}" aria-label="添加${kind==='local'?'本地':'服务器'}地址" title="添加更多地址">+</button></div></div>`;
+ drawer(`<h2>${existing?'编辑项目':'新建项目'}</h2>${existing?'':`<section class="agent-project-prompt"><h3>让 Agent 整理项目</h3><p>填写项目、会话或目录范围，复制后发送给 Agent。</p><textarea id="agent-project-request" aria-label="Agent 项目整理提示词" rows="5">${esc(prompt)}</textarea><button type="button" class="button secondary" id="copy-project-prompt">复制整理提示词</button></section>`}<form id="project-form" class="desk-form"><h3>项目概述</h3>${input('name','项目名称')}${input('summary','研究内容',true)}${input('status','当前进度')}${input('current_version','采用版本')}${input('scope','结果适用范围',true)}${input('todo','待完成事项',true)}<h3>项目地址</h3>${primary('local','本地目录（可留空）','local')}${primary('remote','服务器目录（可留空）','server')}${input('ssh_alias','默认 SSH 主机别名（可留空）')}<div id="extra-addresses"></div><button type="button" class="text-button" id="add-web-address">+ 添加网页链接</button><div class="actions"><button class="button primary" type="submit">保存项目</button><button class="button secondary" type="button" id="project-cancel">取消</button></div></form>`);
+ const appendAddress=(entry={})=>{
+  const a={id:'address-'+crypto.randomUUID(),kind:'local',label:'',path:'',ssh_alias:'',...entry};
+  const block=document.createElement('fieldset');block.className='address-entry';block.dataset.addressId=a.id;
+  block.innerHTML=`<legend>附加地址</legend><div class="address-meta"><label>类型<select data-field="kind" aria-label="地址类型">${[['local','本地目录'],['server','服务器目录'],['url','网页链接']].map(([k,v])=>`<option value="${k}" ${a.kind===k?'selected':''}>${v}</option>`).join('')}</select></label><label>名称<input data-field="label" maxlength="200" value="${esc(a.label)}" placeholder="例如：计算服务器、备份结果"></label></div><label>地址<div class="address-input-row"><input data-field="path" required maxlength="4096" value="${esc(a.path)}"><button type="button" class="button secondary address-add" aria-label="添加另一地址" title="添加更多地址">+</button></div></label><label class="address-ssh">SSH 主机别名<input data-field="ssh_alias" maxlength="200" value="${esc(a.ssh_alias)}" placeholder="留空使用项目默认值"></label><button type="button" class="text-button address-remove">移除此地址</button>`;
+  const kind=block.querySelector('[data-field=kind]'),path=block.querySelector('[data-field=path]');
+  const updateKind=()=>{block.querySelector('.address-ssh').hidden=kind.value!=='server';path.type=kind.value==='url'?'url':'text';if(kind.value==='url'){path.pattern='https?://.+';path.title='请填写 http:// 或 https:// 网页地址';}else{path.removeAttribute('pattern');path.removeAttribute('title');}path.placeholder={local:'本地目录或工作区相对路径',server:'/srv/project/results',url:'https://example.org/project'}[kind.value];};
+  kind.onchange=updateKind;updateKind();
+  block.querySelector('.address-add').onclick=()=>appendAddress({kind:kind.value}).querySelector('[data-field=path]').focus();
+  block.querySelector('.address-remove').onclick=()=>block.remove();
+  $('#extra-addresses').append(block);return block;
+ };
+ (p.addresses||[]).forEach(appendAddress);
+ $$('[data-add-address]').forEach(b=>b.onclick=()=>appendAddress({kind:b.dataset.addAddress}).querySelector('[data-field=path]').focus());
+ $('#add-web-address').onclick=()=>appendAddress({kind:'url'}).querySelector('[data-field=path]').focus();
+ if($('#copy-project-prompt'))$('#copy-project-prompt').onclick=()=>copy($('#agent-project-request').value);
  $('#project-cancel').onclick=()=>existing?showProject(id):close();
- $('#project-form').onsubmit=async e=>{e.preventDefault();const values=Object.fromEntries(new FormData(e.target));try{await api('/api/projects',{revision:saved.revision,project:{id:p.id,...values}});data=await api('/api/overview');render();setView(view);if(!existing)await addProjectCard(projectBy(p.id));await showProject(p.id);}catch(e){toast(e.message);}};
+ $('#project-form').onsubmit=async e=>{e.preventDefault();const values=Object.fromEntries(new FormData(e.target));values.addresses=$$('#extra-addresses .address-entry').map(block=>{const a={id:block.dataset.addressId};block.querySelectorAll('[data-field]').forEach(el=>a[el.dataset.field]=el.value.trim());if(a.kind!=='server')a.ssh_alias='';return a;});try{await api('/api/projects',{revision:saved.revision,project:{id:p.id,...values}});data=await api('/api/overview');render();setView(view);if(!existing)await addProjectCard(projectBy(p.id));await showProject(p.id);}catch(e){toast(e.message);}};
 }catch(e){toast(e.message);}}

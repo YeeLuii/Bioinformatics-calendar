@@ -34,6 +34,24 @@ body.board-mode .calendar-title{margin-top:0}
 @media(max-width:760px){body.board-mode main{padding:8px 12px 12px}body.board-mode .topbar{position:static;height:38px;justify-content:flex-end;padding:0 12px}body.board-mode .workbar{padding-right:0}body.board-mode .matrix-wrap{padding:8px 6px 35px}body.board-mode .matrix{gap:7px}body.board-mode .quad-heading{padding:6px 4px 0}body.board-mode .quad-heading h2{font-size:11px}body.board-mode .drop-zone{--desk-card-width:132px;height:190px;margin:5px 2px 6px}body.board-mode .inbox-tools{width:auto}body.board-mode .inbox-tools input{width:125px}body.board-mode .board-save{font-size:10px}}
 
 /* Coordinate axes replace all quadrant captions; right/up are increasing. */
+/* Project creation and additional named addresses. */
+.inbox-tools{flex-wrap:wrap}
+#inbox-new-project{white-space:nowrap;font-size:12px;padding:7px 10px}
+.primary-address{display:grid;gap:7px}
+.address-input-row{display:flex;gap:8px;align-items:stretch;min-width:0}
+.address-input-row input{flex:1;min-width:0}
+.address-add{flex:0 0 42px;padding:4px!important;font-size:22px!important;line-height:1}
+#extra-addresses{display:grid;gap:16px}
+.address-entry{min-width:0;margin:0;padding:14px;border:1px solid #dae2d5;border-radius:10px;display:grid;gap:12px}
+.address-entry legend{font-size:12px;color:#71836a;padding:0 6px}
+.address-meta{display:grid;grid-template-columns:125px minmax(0,1fr);gap:12px}
+.address-remove{justify-self:end;font-size:12px}
+.agent-project-prompt{padding:16px;border:1px solid #dce5d6;border-radius:10px;background:#f8faf6;margin:16px 0 24px}
+.agent-project-prompt h3{font-size:15px;margin:0 0 5px}
+.agent-project-prompt p{font-size:12px;color:#697d70;margin:0 0 10px}
+.agent-project-prompt textarea{display:block;box-sizing:border-box;width:100%;resize:vertical;min-height:125px;border:1px solid #d3ddcf;border-radius:7px;padding:10px;font:inherit;font-size:13px;line-height:1.7;color:#41553b;background:#fff;margin-bottom:10px}
+@media(max-width:520px){.address-meta{grid-template-columns:1fr}.inbox-tools{width:100%!important}.inbox-tools input{min-width:110px;flex:1}.agent-project-prompt{padding:12px}}
+
 body.board-mode .matrix-wrap{padding:34px 58px 40px 16px}
 body.board-mode .matrix{position:relative;grid-template-areas:'plan do' 'later delegate';gap:20px}
 .quadrant.plan{grid-area:plan}.quadrant.do{grid-area:do}.quadrant.later{grid-area:later}.quadrant.delegate{grid-area:delegate}

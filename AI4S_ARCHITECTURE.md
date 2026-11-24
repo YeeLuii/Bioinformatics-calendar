@@ -26,6 +26,7 @@ flowchart TD
 | `desktop_runtime.py` | 工作区配置、路径解析、路径映射 |
 | `desktop_storage.py` | JSON 读写、原子替换与同机进程锁 |
 | `desktop_repository.py` | 合并生成摘要和人工项目登记、解析项目地址 |
+| `desktop_addresses.py` | 校验附加命名地址，解析本地路径、服务器别名及网页链接 |
 | `desktop_links.py` | 项目与会话关联、独立关联版本 |
 | `desktop_state.py` | 卡片、单层文件夹、待办及布局版本 |
 | `desktop_services.py` | 项目查询、新建、修改、归档恢复和汇总 |

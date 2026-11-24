@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "AI4S Workspace API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "本机单用户研究项目管理。写入需要 X-Desk-Token；从 GET /api/overview 读取当前进程令牌。研究文件不会被修改。"
   },
   "servers": [
@@ -86,6 +86,46 @@
                             "type": "string",
                             "maxLength": 12000,
                             "description": "SSH 主机别名；不存放密码"
+                          },
+                          "addresses": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "maxLength": 200
+                                },
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "local",
+                                    "server",
+                                    "url"
+                                  ]
+                                },
+                                "path": {
+                                  "type": "string",
+                                  "maxLength": 4096
+                                },
+                                "ssh_alias": {
+                                  "type": "string",
+                                  "maxLength": 200
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "kind",
+                                "path"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "maxItems": 50,
+                            "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
                           },
                           "archived": {
                             "type": "boolean"
@@ -206,6 +246,46 @@
                           "type": "string",
                           "maxLength": 12000,
                           "description": "SSH 主机别名；不存放密码"
+                        },
+                        "addresses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "local",
+                                  "server",
+                                  "url"
+                                ]
+                              },
+                              "path": {
+                                "type": "string",
+                                "maxLength": 4096
+                              },
+                              "ssh_alias": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "path"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "maxItems": 50,
+                          "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
                         },
                         "archived": {
                           "type": "boolean"
@@ -338,6 +418,46 @@
                         "type": "string",
                         "maxLength": 12000,
                         "description": "SSH 主机别名；不存放密码"
+                      },
+                      "addresses": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                            },
+                            "label": {
+                              "type": "string",
+                              "maxLength": 200
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "local",
+                                "server",
+                                "url"
+                              ]
+                            },
+                            "path": {
+                              "type": "string",
+                              "maxLength": 4096
+                            },
+                            "ssh_alias": {
+                              "type": "string",
+                              "maxLength": 200
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "path"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "maxItems": 50,
+                        "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
                       }
                     },
                     "required": [
@@ -430,6 +550,46 @@
                           "type": "string",
                           "maxLength": 12000,
                           "description": "SSH 主机别名；不存放密码"
+                        },
+                        "addresses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "local",
+                                  "server",
+                                  "url"
+                                ]
+                              },
+                              "path": {
+                                "type": "string",
+                                "maxLength": 4096
+                              },
+                              "ssh_alias": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "path"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "maxItems": 50,
+                          "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
                         },
                         "archived": {
                           "type": "boolean"
@@ -579,6 +739,46 @@
                           "maxLength": 12000,
                           "description": "SSH 主机别名；不存放密码"
                         },
+                        "addresses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "local",
+                                  "server",
+                                  "url"
+                                ]
+                              },
+                              "path": {
+                                "type": "string",
+                                "maxLength": 4096
+                              },
+                              "ssh_alias": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "path"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "maxItems": 50,
+                          "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
+                        },
                         "archived": {
                           "type": "boolean"
                         },
@@ -716,6 +916,46 @@
                         "type": "string",
                         "maxLength": 12000,
                         "description": "SSH 主机别名；不存放密码"
+                      },
+                      "addresses": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                            },
+                            "label": {
+                              "type": "string",
+                              "maxLength": 200
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "local",
+                                "server",
+                                "url"
+                              ]
+                            },
+                            "path": {
+                              "type": "string",
+                              "maxLength": 4096
+                            },
+                            "ssh_alias": {
+                              "type": "string",
+                              "maxLength": 200
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "path"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "maxItems": 50,
+                        "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
                       }
                     },
                     "required": [],
@@ -806,6 +1046,46 @@
                           "type": "string",
                           "maxLength": 12000,
                           "description": "SSH 主机别名；不存放密码"
+                        },
+                        "addresses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "local",
+                                  "server",
+                                  "url"
+                                ]
+                              },
+                              "path": {
+                                "type": "string",
+                                "maxLength": 4096
+                              },
+                              "ssh_alias": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "path"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "maxItems": 50,
+                          "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
                         },
                         "archived": {
                           "type": "boolean"
@@ -982,6 +1262,46 @@
                           "maxLength": 12000,
                           "description": "SSH 主机别名；不存放密码"
                         },
+                        "addresses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "local",
+                                  "server",
+                                  "url"
+                                ]
+                              },
+                              "path": {
+                                "type": "string",
+                                "maxLength": 4096
+                              },
+                              "ssh_alias": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "path"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "maxItems": 50,
+                          "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
+                        },
                         "archived": {
                           "type": "boolean"
                         },
@@ -1156,6 +1476,46 @@
                           "type": "string",
                           "maxLength": 12000,
                           "description": "SSH 主机别名；不存放密码"
+                        },
+                        "addresses": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                              },
+                              "label": {
+                                "type": "string",
+                                "maxLength": 200
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "local",
+                                  "server",
+                                  "url"
+                                ]
+                              },
+                              "path": {
+                                "type": "string",
+                                "maxLength": 4096
+                              },
+                              "ssh_alias": {
+                                "type": "string",
+                                "maxLength": 200
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "kind",
+                              "path"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "maxItems": 50,
+                          "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
                         },
                         "archived": {
                           "type": "boolean"
@@ -1641,6 +2001,46 @@
             "type": "string",
             "maxLength": 12000,
             "description": "SSH 主机别名；不存放密码"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                },
+                "label": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "local",
+                    "server",
+                    "url"
+                  ]
+                },
+                "path": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "ssh_alias": {
+                  "type": "string",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "path"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 50,
+            "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
           }
         },
         "required": [
@@ -1695,9 +2095,84 @@
             "type": "string",
             "maxLength": 12000,
             "description": "SSH 主机别名；不存放密码"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                },
+                "label": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "local",
+                    "server",
+                    "url"
+                  ]
+                },
+                "path": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "ssh_alias": {
+                  "type": "string",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "path"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 50,
+            "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
           }
         },
         "required": [],
+        "additionalProperties": false
+      },
+      "ProjectAddress": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "local",
+              "server",
+              "url"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "ssh_alias": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "path"
+        ],
         "additionalProperties": false
       },
       "ThreadLink": {
@@ -1775,6 +2250,46 @@
             "type": "string",
             "maxLength": 12000,
             "description": "SSH 主机别名；不存放密码"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                },
+                "label": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "local",
+                    "server",
+                    "url"
+                  ]
+                },
+                "path": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "ssh_alias": {
+                  "type": "string",
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "path"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 50,
+            "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
           },
           "archived": {
             "type": "boolean"
@@ -1870,6 +2385,46 @@
                   "type": "string",
                   "maxLength": 12000,
                   "description": "SSH 主机别名；不存放密码"
+                },
+                "addresses": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                      },
+                      "label": {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "local",
+                          "server",
+                          "url"
+                        ]
+                      },
+                      "path": {
+                        "type": "string",
+                        "maxLength": 4096
+                      },
+                      "ssh_alias": {
+                        "type": "string",
+                        "maxLength": 200
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "kind",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxItems": 50,
+                  "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
                 },
                 "archived": {
                   "type": "boolean"
@@ -1977,6 +2532,46 @@
                 "type": "string",
                 "maxLength": 12000,
                 "description": "SSH 主机别名；不存放密码"
+              },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "local",
+                        "server",
+                        "url"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "ssh_alias": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50,
+                "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
               },
               "archived": {
                 "type": "boolean"
@@ -2093,6 +2688,46 @@
                 "type": "string",
                 "maxLength": 12000,
                 "description": "SSH 主机别名；不存放密码"
+              },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "local",
+                        "server",
+                        "url"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "ssh_alias": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50,
+                "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
               }
             },
             "required": [
@@ -2171,6 +2806,46 @@
                 "type": "string",
                 "maxLength": 12000,
                 "description": "SSH 主机别名；不存放密码"
+              },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "local",
+                        "server",
+                        "url"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "ssh_alias": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50,
+                "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
               },
               "archived": {
                 "type": "boolean"
@@ -2287,6 +2962,46 @@
                 "type": "string",
                 "maxLength": 12000,
                 "description": "SSH 主机别名；不存放密码"
+              },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "local",
+                        "server",
+                        "url"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "ssh_alias": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50,
+                "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
               }
             },
             "required": [],
@@ -2364,6 +3079,46 @@
                 "type": "string",
                 "maxLength": 12000,
                 "description": "SSH 主机别名；不存放密码"
+              },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "local",
+                        "server",
+                        "url"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "ssh_alias": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50,
+                "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
               },
               "archived": {
                 "type": "boolean"
@@ -2505,6 +3260,46 @@
                 "maxLength": 12000,
                 "description": "SSH 主机别名；不存放密码"
               },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "local",
+                        "server",
+                        "url"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "ssh_alias": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50,
+                "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
+              },
               "archived": {
                 "type": "boolean"
               },
@@ -2645,6 +3440,46 @@
                 "maxLength": 12000,
                 "description": "SSH 主机别名；不存放密码"
               },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "local",
+                        "server",
+                        "url"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "ssh_alias": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50,
+                "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
+              },
               "archived": {
                 "type": "boolean"
               },
@@ -2778,6 +3613,46 @@
                 "type": "string",
                 "maxLength": 12000,
                 "description": "SSH 主机别名；不存放密码"
+              },
+              "addresses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z0-9_-]{1,80}$"
+                    },
+                    "label": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "local",
+                        "server",
+                        "url"
+                      ]
+                    },
+                    "path": {
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "ssh_alias": {
+                      "type": "string",
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "path"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50,
+                "description": "附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。"
               },
               "archived": {
                 "type": "boolean"

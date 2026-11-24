@@ -12,6 +12,20 @@
 
 手工编辑应优先调用服务接口，以保留 revision 检查。此文件中的项目字段会覆盖 `desktop_data.json` 中同 ID 的生成字段。外部适配器不要直接覆盖人工项目文件。
 
+项目仍保留原来的 `local`、`remote`、`ssh_alias` 主地址字段。可选 `addresses` 数组保存最多50个附加地址：
+
+```json
+[
+  {"id":"compute-two","label":"第二台计算服务器","kind":"server","path":"/srv/project/results","ssh_alias":"compute-two"},
+  {"id":"local-backup","label":"本地副本","kind":"local","path":"results/backup"},
+  {"id":"project-web","label":"项目网页","kind":"url","path":"https://example.org/project"}
+]
+```
+
+每项的 id 在项目内唯一，使用1–80位字母、数字、连字符或下划线；kind 为 local/server/url，path 必填。label 和 ssh_alias 最多200字符，path 最多4096字符。服务器目录须为绝对路径，网页仅允许不含账号密码的 HTTP/HTTPS 链接。服务器条目的 SSH 别名留空时使用项目默认值；其他类型不填写 SSH 别名。本地相对路径以 workspace_root 为基准，保存时不改写为解析后的路径。
+
+更新项目时省略 addresses 会保留原列表；提供数组会整体替换，空数组清空附加地址，主地址不受影响。修改单个地址前应读取整个列表并保留其他项及稳定 ID。附加地址导航 ID 为 `project:<项目ID>:address:<地址ID>`，仅已登记本地地址可经目录打开接口访问，网页链接由浏览器打开。旧项目无须迁移即可读取；写入过多地址后，应使用1.1版及以上程序管理，旧版本保存项目可能丢失新增字段。
+
 可选 `desktop_data.json` 顶层最小形态：
 
 ```json

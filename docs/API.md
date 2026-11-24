@@ -1,4 +1,4 @@
-# 完整接口说明 · v1.0.0
+# 完整接口说明 · v1.1.0
 
 本服务管理科研项目、日程和分析结果的引用。默认 HTTP 基址为 `http://127.0.0.1:8828`，实际端口以工作区配置为准。MCP 使用本地 stdio，不通过 HTTP。
 
@@ -164,6 +164,8 @@ call("/api/v1/projects/" + project_id, "PATCH", {
 另支持 `ping`、`resources/list` 和 `resources/read`。没有远程 HTTP MCP、订阅、prompts、sampling、任意 shell 工具或代发聊天功能。
 
 ## 6. 网页内部接口
+
+接口1.1新增可选项目字段 `addresses`，HTTP 与 MCP 的项目新建、读取和更新使用同一 Schema，原 `/api/v1` 路由保持兼容。数组元素为 `{id,kind,path,label?,ssh_alias?}`；约束、局部修改时的保留规则及完整示例见 [数据模型](DATA_MODEL.md)。`/api/item?id=project:<项目ID>:address:<地址ID>` 返回已登记附加位置；目录打开接口仍只允许本机目录，服务器入口提供对应 SSH 命令，网页在浏览器中打开。
 
 以下用于内置网页，非稳定 v1 API。所有写入同样要求 token 和当前来源；不应把导航接口当作任意路径或命令执行工具。
 

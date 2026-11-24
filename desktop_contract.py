@@ -1,13 +1,15 @@
 """Versioned tool contracts; shared by MCP, HTTP and generated OpenAPI."""
 import re
 
-VERSION='1.0.0'
+VERSION='1.1.0'
 TEXT={'type':'string','maxLength':12000}
 PID={'type':'string','pattern':r'^[a-zA-Z0-9_-]{1,80}$'}
 REV={'type':'integer','minimum':0,'description':'先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。'}
 FIELDS={k:{**TEXT,'description':v} for k,v in {'name':'项目名称','summary':'研究问题与项目概述','status':'当前进度','current_version':'当前采用版本','scope':'结果适用范围与限制','todo':'待完成事项','local':'本地目录，支持工作区相对路径','remote':'服务器目录；不涉及服务器时留空','ssh_alias':'SSH 主机别名；不存放密码'}.items()}
 
 def obj(props,required=()):return {'type':'object','properties':props,'required':list(required),'additionalProperties':False}
+ADDRESS=obj({'id':PID,'label':{'type':'string','maxLength':200},'kind':{'type':'string','enum':['local','server','url']},'path':{'type':'string','maxLength':4096},'ssh_alias':{'type':'string','maxLength':200}},['id','kind','path'])
+FIELDS['addresses']={'type':'array','items':ADDRESS,'maxItems':50,'description':'附加命名地址；省略保留现有列表，提供数组则整体替换，空数组清空。主local/remote字段保持兼容。'}
 PROJECT=obj({'id':PID,**FIELDS},['name'])
 PATCH=obj(FIELDS)
 THREAD=obj({'id':{'type':'string','pattern':r'^[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}$'},'title':TEXT,'provider':{'type':'string','enum':['codex']}},['id','title'])
@@ -95,4 +97,4 @@ def openapi():
         else:entry['requestBody']={'required':True,'content':{'application/json':{'schema':body}}}
         paths.setdefault(path,{})[method]=entry
     paths['/api/overview']={'get':{'operationId':'getBootstrap','summary':'浏览器启动信息与当前进程的临时写入令牌 token','responses':{'200':response},'security':[]}}
-    return {'openapi':'3.1.0','info':{'title':'AI4S Workspace API','version':VERSION,'description':'本机单用户研究项目管理。写入需要 X-Desk-Token；从 GET /api/overview 读取当前进程令牌。研究文件不会被修改。'},'servers':[{'url':'http://127.0.0.1:{port}','variables':{'port':{'default':'8828'}}}],'paths':paths,'components':{'securitySchemes':{'DeskToken':{'type':'apiKey','in':'header','name':'X-Desk-Token'}},'schemas':{'ProjectInput':PROJECT,'ProjectPatch':PATCH,'ThreadLink':THREAD,'ProjectRecord':{'type':'object','properties':{'id':PID,**FIELDS,'archived':{'type':'boolean'},'counts':{'type':'object','additionalProperties':{'type':'integer'}}},'required':['id','name'],'additionalProperties':True}}},'x-ai4s-mcp-protocol':'2025-11-25','x-ai4s-tool-contracts':tool_definitions()}
+    return {'openapi':'3.1.0','info':{'title':'AI4S Workspace API','version':VERSION,'description':'本机单用户研究项目管理。写入需要 X-Desk-Token；从 GET /api/overview 读取当前进程令牌。研究文件不会被修改。'},'servers':[{'url':'http://127.0.0.1:{port}','variables':{'port':{'default':'8828'}}}],'paths':paths,'components':{'securitySchemes':{'DeskToken':{'type':'apiKey','in':'header','name':'X-Desk-Token'}},'schemas':{'ProjectInput':PROJECT,'ProjectPatch':PATCH,'ProjectAddress':ADDRESS,'ThreadLink':THREAD,'ProjectRecord':{'type':'object','properties':{'id':PID,**FIELDS,'archived':{'type':'boolean'},'counts':{'type':'object','additionalProperties':{'type':'integer'}}},'required':['id','name'],'additionalProperties':True}}},'x-ai4s-mcp-protocol':'2025-11-25','x-ai4s-tool-contracts':tool_definitions()}

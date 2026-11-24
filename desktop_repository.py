@@ -1,5 +1,6 @@
 """Project catalog projection and editable metadata repository."""
 import pathlib
+import desktop_addresses as addresses
 import desktop_runtime as rt
 from desktop_storage import read_json, write_json
 path=rt.path
@@ -18,6 +19,7 @@ def overview(include_archived=False, saved_projects=None):
     for p in projects.values():
         for k in ['summary','status','current_version','scope','todo','local','remote']:p.setdefault(k,'')
         p.setdefault('counts',{});p.setdefault('name',p['id'])
+        p.setdefault('addresses',[])
         p['ssh_alias']=p.get('ssh_alias') or rt.CONFIG.get('ssh_alias','')
         p['local']=str(local_path(p['local'])) if p['local'] else ''
         p['remote']=remap(p['remote'],'server')
@@ -37,6 +39,9 @@ def overview(include_archived=False, saved_projects=None):
 
 def project_location(id):
     for p in overview()['projects']:
+        for entry in addresses.clean_addresses(p['addresses']):
+            if id=='project:'+p['id']+':address:'+entry['id']:
+                return addresses.location(p,entry)
         for host,key in [('local','local'),('server','remote')]:
             if p.get(key+'_id' if key=='local' else 'remote_id')!=id:continue
             value=p[key]
@@ -54,6 +59,7 @@ def save_project(obj):
         clean={k:p.get(k,'').strip() for k in allowed if isinstance(p.get(k,''),str)}
         if len(clean)!=len(allowed) or not clean['name'] or any(len(v)>12000 for v in clean.values()):raise ValueError('项目内容无效')
         if clean['ssh_alias'] and (clean['ssh_alias'].startswith('-') or not re.fullmatch(r'[\w.@:-]+',clean['ssh_alias'])):raise ValueError('SSH 别名无效')
+        clean['addresses']=addresses.clean_addresses(p.get('addresses',[]))
         if 'archived' in p:
             if not isinstance(p['archived'],bool):raise ValueError('归档状态必须为布尔值')
             clean['archived']=p['archived']

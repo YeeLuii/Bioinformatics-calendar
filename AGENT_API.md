@@ -1,4 +1,4 @@
-# AI4S Agent Interface v1.0.0
+# AI4S Agent Interface v1.1.0
 
 ## Scope and invariants
 
@@ -59,6 +59,8 @@ For later synchronization, read new source evidence before applying changes. `pr
 | `workspace_status` | none | None; paths, capability flags, schema and protocol versions |
 
 Project fields: `name`, `summary`, `status`, `current_version`, `scope`, `todo`, `local`, `remote`, `ssh_alias`. Omitted fields in an update remain unchanged. Empty strings intentionally clear fields. Unknown keys and invalid types are rejected. There is no implicit creation during `project_update`.
+
+Optional `addresses` adds up to 50 named locations: `{id, kind, path, label?, ssh_alias?}`. The kind is `local`, `server`, or `url`; id is stable and unique within the project. Server paths are absolute and may use independent SSH aliases; local paths may be workspace-relative; web links allow HTTP/HTTPS without embedded credentials. Read the existing array before changing it: omitted addresses preserves it, a supplied array replaces it, and [] clears extras without clearing primary local/remote. See [data model](docs/DATA_MODEL.md). Do not use older application versions to write projects containing addresses.
 
 `local` accepts workspace-relative or absolute directories. `remote` is a server filesystem path, not a shell command. Leave `remote` empty for local-only projects; no server entry will be shown. `ssh_alias` is an existing SSH alias or host, never a password. Codex links contain UUIDs; accessing them requires a compatible installed client and authorization for the real conversation.
 

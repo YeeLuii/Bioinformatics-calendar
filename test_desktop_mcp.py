@@ -13,7 +13,7 @@ class MCPTests(unittest.TestCase):
             requests=[{'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2025-11-25','capabilities':{},'clientInfo':{'name':'acceptance','version':'1'}}},{'jsonrpc':'2.0','method':'notifications/initialized'},{'jsonrpc':'2.0','id':2,'method':'tools/list'},{'jsonrpc':'2.0','id':3,'method':'resources/read','params':{'uri':'ai4s://docs/openapi'}}]
             operations=[
                 ('projects_list',{}),
-                ('project_create',{'expected_revision':0,'project':{'id':'materials','name':'材料表征','local':'.'}}),
+                ('project_create',{'expected_revision':0,'project':{'id':'materials','name':'材料表征','local':'.','addresses':[{'id':'archive','kind':'server','path':'/srv/archive','ssh_alias':'backup-host'}]}}),
                 ('project_update',{'project_id':'materials','expected_revision':1,'patch':{'status':'质控完成','todo':'重复实验'}}),
                 ('project_update',{'project_id':'materials','expected_revision':1,'patch':{'status':'不应覆盖'}}),
                 ('project_get',{'project_id':'materials'}),
@@ -42,6 +42,7 @@ class MCPTests(unittest.TestCase):
             self.assertTrue(results[13]['result']['isError']);self.assertTrue(results[22]['result']['isError'])
             self.assertIn('revision_conflict',results[13]['result']['content'][0]['text'])
             self.assertEqual(results[14]['result']['structuredContent']['project']['status'],'质控完成')
+            self.assertEqual(results[14]['result']['structuredContent']['project']['addresses'][0]['ssh_alias'],'backup-host')
             self.assertEqual(results[17]['result']['structuredContent']['projects'],[])
             self.assertFalse(results[18]['result']['structuredContent']['project']['archived'])
             self.assertEqual(results[20]['result']['structuredContent']['threads'][0]['title'],'测试关联')

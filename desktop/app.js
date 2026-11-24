@@ -23,6 +23,7 @@ function render(){
  $('#scope-notice').hidden=!data.capabilities.file_index;
  document.querySelectorAll('a[href="/export/files.tsv"]').forEach(a=>a.hidden=!data.capabilities.export_files);
  $('#new-project').onclick=()=>editProject();
+ $('#inbox-new-project').onclick=()=>editProject();
  const p=projectBy(project);$('#crumb').textContent=p?p.name:'全部项目';$('#heading').textContent=p?p.name:'项目资料';$('#intro').textContent=p?p.status+' · '+p.scope:'';
  $('#updated').textContent=data.updated_at.slice(0,19).replace('T',' ');$('#connection').textContent='';
  $('#all-projects').classList.toggle('active',!project);$('#project-count').textContent=data.projects.length;
@@ -54,6 +55,10 @@ async function loadFiles(){
 function drawer(html){lastFocus=document.activeElement;$('#details').innerHTML=html;$('#drawer').hidden=false;$('#scrim').hidden=false;document.body.style.overflow='hidden';$('#close-drawer').focus();wirePaths();}
 function close(){if(typeof activeFolder!=='undefined')activeFolder='';if($('#drawer').hidden)return;$('#drawer').hidden=true;$('#scrim').hidden=true;document.body.style.overflow='';lastFocus?.focus();}
 function pathHtml(loc,label=''){
+ if(loc.host==='url'){
+  const safe=/^https?:\/\//i.test(loc.path);
+  return `<div class="pathblock"><h3>${esc(label||loc.label||'网页链接')}</h3><code>${esc(shownPath(loc.path))}</code><div class="actions"><button class="button secondary" data-copy="${esc(loc.path)}">复制链接</button>${safe?`<a class="button primary" href="${esc(loc.path)}" target="_blank" rel="noopener noreferrer">打开链接</a>`:''}</div></div>`;
+ }
  const alias=loc.ssh_alias||projectBy(loc.project_id)?.ssh_alias||data.workspace?.ssh_alias||'';
  const exists=['available','available_at_scan','observed_metadata'].includes(loc.availability);
  return `<div class="pathblock"><h3>${esc(label|| (loc.host==='local'?'本地位置':'服务器位置'))}</h3><code>${esc(shownPath(loc.path))}</code><div class="availability">${esc(exists?'路径已核验':loc.availability==='not_observed'?'本轮未观察到此精确路径':loc.availability==='unverified'?'已登记地址':loc.availability||'可达性未核验')}</div><div class="actions"><button class="button secondary" data-copy="${esc(loc.path)}">复制路径</button>${loc.host==='local'?`<button class="button primary" data-open="${esc(loc.id)}" ${exists?'':'disabled'}>打开所在目录</button>`:`<button class="button secondary" data-ssh="${esc(loc.path)}" data-ssh-host="${esc(alias)}" ${alias?'':'disabled title="未配置 SSH 主机别名"'}>复制 SSH 命令</button>`}</div></div>`;
