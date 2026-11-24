@@ -86,3 +86,26 @@ python -B deploy.py --workspace ../ai4s-workspace --restart --mcp required
 只运行对应平台的入口脚本，并根据退出码和 JSON 报告结果。不要临时编写安装逻辑，不自动下载运行时，不手工写 Codex 配置。需要变更同名 MCP 的目标时，应先说明旧配置对应的工作区，再按用户授权使用 --replace-mcp。
 
 部署成功后询问：“是否要分析当前会话和项目的分析进度并同步到工作台？” 同步是另一个明确授权的操作，范围及调用顺序见 [Agent 接口](../AGENT_API.md)。启动脚本不扫描会话、不导入分析目录，也不推断科研任务完成状态。
+
+## 可选技能与近义词调用
+
+对用户的名称为 **ai4s项目桌面**，底层 MCP 注册名为 `ai4s`。注册后可通过以下只读命令检查：
+
+```sh
+codex mcp get ai4s --json
+```
+
+应确认 enabled 为 true、transport.type 为 stdio，并核对解释器、desktop_mcp.py 和 --config 指向的工作区。不要公开整份本机配置输出。之后重载客户端，让 Agent 调用 `workspace_status`、`projects_list` 验证真实连接；不能只凭配置记录判断工具已经可用。
+
+仓库提供可选的 [ai4s 技能](https://github.com/YeeLuii/Bioinformatics-calendar/tree/main/skills/ai4s)，显示名为“ai4s项目桌面”，支持显式 `$ai4s` 和“项目工作台、项目桌面、科研日程管理、AI4S工作台、ai4s”等自然语言叫法。自然语言选择取决于上下文；显式调用更明确。
+
+安装时将仓库的整个 `skills/ai4s` 目录复制到 Codex 的技能目录：
+
+- 默认位置：用户目录下的 `.codex/skills/ai4s/`。
+- 如果已经设置 CODEX_HOME，则使用其下面的 `skills/ai4s/`，不为安装技能改动该环境变量。
+- 保留目录内的 `SKILL.md` 和 `agents/openai.yaml`。若目标已存在，先保留现有技能及个人工作区绑定，再比较更新；不要直接覆盖本机定制内容。
+- 重载客户端后，在技能列表查找“ai4s项目桌面”，或输入 `$ai4s`。
+
+通用技能不包含电脑路径、研究项目或真实会话信息，运行时从已注册 MCP 查询工作区。安装技能不会注册 MCP；部署脚本也不会自动复制技能。没有技能时，Agent 仍可使用 MCP 工具管理项目。
+
+例如：“请用科研日程管理整理本周待办，并保留其他安排。”项目增改及会话关联使用 MCP；当前十个 MCP 工具不包含日历和桌面布局操作，相关操作使用网页或同一工作区的 HTTP 接口，具体约定见 [完整接口说明](API.md)。

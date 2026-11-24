@@ -8,6 +8,8 @@ Use MCP tools for project operations. `openapi.json` documents the versioned HTT
 
 ## MCP deployment
 
+The user-facing invocation name is **ai4s项目桌面**; the MCP registration identifier remains `ai4s`. The optional `skills/ai4s` skill supports `$ai4s` and the phrases 项目工作台、项目桌面、科研日程管理、AI4S工作台、ai4s. These are skill-selection cues, not separate server registrations or tool names. Installing the skill does not register MCP, and the deployment script does not automatically install the skill. After client reload, verify the actual workspace with `workspace_status` and `projects_list`.
+
 Requires Python >=3.9,<4.0; standard library only. Reuse an installed compatible interpreter; do not require a specific minor version or download a runtime automatically.
 
 For deployment, run `deploy.ps1 --mcp required --no-open` on Windows (through PowerShell) or `sh ./deploy.sh --mcp required --no-open` on macOS/Linux. Read [deployment options](docs/DEPLOYMENT.md). The script performs runtime checks, workspace initialization, MCP validation, official Codex CLI registration, and HTTP startup. Report the exit code and JSON result; do not bypass a failed check by hand-editing config.toml. The registration adapter only uses `codex mcp add`, with byte backups and guarded rollback. No web server or SDK installation is required for standalone MCP:

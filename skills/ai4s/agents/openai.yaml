@@ -1,0 +1,6 @@
+interface:
+  display_name: "ai4s项目桌面"
+  short_description: "管理科研项目、关联分析会话、整理结果进度，并安排项目桌面与日程"
+  default_prompt: "请使用 $ai4s 管理我的科研项目桌面，按本次要求更新项目、会话关联或日程。"
+policy:
+  allow_implicit_invocation: true
