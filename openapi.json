@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "AI4S Workspace API",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "本机单用户研究项目管理。写入需要 X-Desk-Token；从 GET /api/overview 读取当前进程令牌。研究文件不会被修改。"
   },
   "servers": [
@@ -3913,6 +3913,12 @@
                             "type": "string",
                             "pattern": "^[a-zA-Z0-9_-]{1,100}$"
                           },
+                          "order": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
+                          },
                           "type": {
                             "type": "string",
                             "enum": [
@@ -4014,6 +4020,12 @@
                             "type": "string",
                             "pattern": "^[a-zA-Z0-9_-]{1,100}$"
                           },
+                          "order": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
+                          },
                           "type": {
                             "type": "string",
                             "enum": [
@@ -4070,6 +4082,12 @@
                         "id": {
                           "type": "string",
                           "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+                        },
+                        "order": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000,
+                          "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
                         },
                         "type": {
                           "type": "string",
@@ -4164,6 +4182,12 @@
                         "type": "string",
                         "pattern": "^[a-zA-Z0-9_-]{1,100}$"
                       },
+                      "order": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000,
+                        "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -4255,6 +4279,12 @@
                             "type": "string",
                             "pattern": "^[a-zA-Z0-9_-]{1,100}$"
                           },
+                          "order": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
+                          },
                           "type": {
                             "type": "string",
                             "enum": [
@@ -4311,6 +4341,12 @@
                         "id": {
                           "type": "string",
                           "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+                        },
+                        "order": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 1000000,
+                          "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
                         },
                         "type": {
                           "type": "string",
@@ -4411,6 +4447,12 @@
                   "patch": {
                     "type": "object",
                     "properties": {
+                      "order": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 1000000,
+                        "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -4498,6 +4540,12 @@
                           "id": {
                             "type": "string",
                             "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+                          },
+                          "order": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 1000000,
+                            "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
                           },
                           "type": {
                             "type": "string",
@@ -9621,6 +9669,12 @@
                   "type": "string",
                   "pattern": "^[a-zA-Z0-9_-]{1,100}$"
                 },
+                "order": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000,
+                  "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
+                },
                 "type": {
                   "type": "string",
                   "enum": [
@@ -9697,6 +9751,12 @@
               "id": {
                 "type": "string",
                 "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+              },
+              "order": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000,
+                "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
               },
               "type": {
                 "type": "string",
@@ -9775,6 +9835,12 @@
                   "type": "string",
                   "pattern": "^[a-zA-Z0-9_-]{1,100}$"
                 },
+                "order": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000,
+                  "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
+                },
                 "type": {
                   "type": "string",
                   "enum": [
@@ -9831,6 +9897,12 @@
               "id": {
                 "type": "string",
                 "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+              },
+              "order": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000,
+                "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
               },
               "type": {
                 "type": "string",
@@ -9909,6 +9981,12 @@
           "patch": {
             "type": "object",
             "properties": {
+              "order": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000,
+                "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
+              },
               "type": {
                 "type": "string",
                 "enum": [
@@ -9984,6 +10062,12 @@
                   "type": "string",
                   "pattern": "^[a-zA-Z0-9_-]{1,100}$"
                 },
+                "order": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000,
+                  "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
+                },
                 "type": {
                   "type": "string",
                   "enum": [
@@ -10040,6 +10124,12 @@
               "id": {
                 "type": "string",
                 "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+              },
+              "order": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000,
+                "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
               },
               "type": {
                 "type": "string",
@@ -10143,6 +10233,12 @@
                 "id": {
                   "type": "string",
                   "pattern": "^[a-zA-Z0-9_-]{1,100}$"
+                },
+                "order": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000,
+                  "description": "文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。"
                 },
                 "type": {
                   "type": "string",

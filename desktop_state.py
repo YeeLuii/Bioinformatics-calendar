@@ -41,6 +41,7 @@ def validate(s):
         if c['type']=='project' and c['target'] not in projects:raise ValueError('项目未登记')
         if c['type']=='directory':
             if len(c['target'])>2048 or not (pathlib.PureWindowsPath(c['target']).is_absolute() or pathlib.PurePosixPath(c['target']).is_absolute()):raise ValueError('目录须使用绝对路径')
+        if 'order' in c and (type(c['order']) is not int or not 0<=c['order']<=1000000):raise ValueError('卡片排序须为 0–1000000 的整数')
         for k in ['x','y']:
             n=c.get(k)
             if not isinstance(n,(int,float)) or not math.isfinite(n) or not 0<=n<=1:raise ValueError('卡片位置无效')

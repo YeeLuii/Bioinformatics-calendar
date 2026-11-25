@@ -97,7 +97,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             exports={'/export/files.tsv':HERE/'tables/unified_file_inventory.tsv','/export/summary.md':HERE/'UNIFIED_RESULTS.md'}
             if u.path in exports:return self.file(exports[u.path],download=True)
             if u.path in ['/', '/index.html']:return self.file(WEB/'index.html')
-            if u.path in ['/style.css','/app.js','/board.css','/board.js','/details.js','/icon.svg','/tasks.js','/gantt.js','/workspace.js','/workspace.css']:return self.file(WEB/u.path.lstrip('/'))
+            if u.path in ['/style.css','/app.js','/board.css','/board.js','/folders.js','/details.js','/icon.svg','/tasks.js','/gantt.js','/workspace.js','/workspace.css']:return self.file(WEB/u.path.lstrip('/'))
             return self.send({'error':'Not found'},404)
         except services.NotFoundError as e:return self.send({'error':str(e)},404)
         except (OSError,ValueError,KeyError,TypeError,sqlite3.Error) as e:return self.send({'error':str(e)},400)

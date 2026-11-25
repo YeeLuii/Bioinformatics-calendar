@@ -31,7 +31,7 @@ function wireCards(root){
   if(cardBy(el.dataset.card).type==='folder'){
    el.ondragover=e=>{e.preventDefault();e.stopPropagation();el.classList.add('drop-folder');};
    el.ondragleave=()=>el.classList.remove('drop-folder');
-   el.ondrop=e=>{e.preventDefault();e.stopPropagation();el.classList.remove('drop-folder');const id=e.dataTransfer.getData('text/plain'),c=cardBy(id);if(!c)return;if(c.type==='folder'){toast('文件夹暂不支持嵌套');return;}changeBoard(()=>{c.folder=el.dataset.card;}).then(ok=>{if(ok)toast('已收进桌面文件夹');});};
+   el.ondrop=e=>{e.preventDefault();e.stopPropagation();el.classList.remove('drop-folder');const id=e.dataTransfer.getData('text/plain'),c=cardBy(id);if(!c)return;if(c.type==='folder'){toast('文件夹暂不支持嵌套');return;}changeBoard(()=>{c.folder=el.dataset.card;delete c.order;}).then(ok=>{if(ok)toast('已收进桌面文件夹');});};
   }
  });
 }
@@ -60,12 +60,6 @@ async function openCard(id){
   await api('/api/open-card',{id});toast(c.type==='thread'?'已请求 Codex 打开会话；如果没有切换，请在卡片菜单复制会话链接。':'已打开目录');
  }catch(e){toast(e.message);}
 }
-function folderView(id){
- const c=cardBy(id);if(!c)return;activeFolder=id;
- const cs=visibleCards().filter(x=>x.folder===id);
- drawer(`<h2>▰ ${esc(c.title)}</h2><p>这是桌面上的会话分组，不会移动磁盘文件，也不会修改 Codex 的项目归属。</p><div class="actions"><button class="button secondary" id="folder-edit">重命名 / 安排</button><button class="button secondary" id="folder-add">添加会话快捷方式</button></div><div class="folder-grid">${cs.map(x=>cardHTML(x)).join('')||'<p class="board-empty">把桌面卡片拖到文件夹上，或在卡片菜单选择此文件夹。</p>'}</div>`);
- wireCards($('#details'));$('#folder-edit').onclick=()=>cardEditor(id);$('#folder-add').onclick=()=>cardEditor('', 'thread',id);
-}
 function locationOptions(c){return Object.entries(zoneNames).map(([k,v])=>`<option value="${k}" ${c.zone===k?'selected':''}>${v}</option>`).join('');}
 function cardEditor(id='',type='folder',parent=''){
  activeFolder='';const existing=cardBy(id),c=existing||{id:newId('c'),type,title:'',target:'',folder:parent,zone:'inbox',x:0,y:0};
@@ -73,8 +67,8 @@ function cardEditor(id='',type='folder',parent=''){
  drawer(`<h2>${isNew?'添加'+typeNames[c.type]:'安排卡片'}</h2><form id="card-form" class="desk-form"><label>显示名称<input name="title" required maxlength="12000" value="${esc(c.title)}" placeholder="例如：样本质控"></label>${c.type==='thread'?`<label>Codex 会话 ID 或链接<input name="target" required value="${esc(c.target)}" placeholder="codex://threads/会话UUID"></label><p class="form-note">点击卡片将打开已有会话。继续提问、重命名或归档，请在 Codex 中完成。</p>`:c.type==='directory'?`<label>本机目录的完整路径<input name="target" required value="${esc(c.target)}" placeholder="D:\\项目目录"></label><p class="form-note">此处添加目录入口，不会移动目录。</p>`:''}<label>摆放区域<select name="zone">${locationOptions(c)}</select></label>${c.type!=='folder'?`<label>收进文件夹<select name="folder"><option value="">直接显示在桌面</option>${board.cards.filter(x=>x.type==='folder').map(f=>`<option value="${f.id}" ${c.folder===f.id?'selected':''}>${esc(f.title)}</option>`).join('')}</select></label>`:''}<div class="actions"><button class="button primary" type="submit">保存安排</button><button class="button secondary" type="button" id="card-cancel">取消</button></div></form>${existing?`<div class="actions"><button class="button secondary" id="card-task">为这张卡片添加待办</button>${c.type==='thread'?'<button class="button secondary" id="card-link">复制会话链接</button><button class="button secondary" id="card-resume">复制 CLI 续接命令</button>':''}<button class="text-button danger" id="card-remove">移除桌面快捷方式</button></div><p class="form-note">移除快捷方式保留真实会话和源文件；文件夹内的卡片将返回待安排区。</p>`:''}`);
  $('#card-cancel').onclick=close;
  $('#card-form').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);let target=String(fd.get('target')??c.target).trim();if(c.type==='thread'){const m=target.match(/(?:^|\/)([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})(?:[?/#].*)?$/i);if(!m){toast('请填写有效的会话 UUID 或 codex://threads/ 链接');return;}target=m[1];}
- const value={...c,title:String(fd.get('title')).trim(),target,zone:String(fd.get('zone')),folder:String(fd.get('folder')||'')};if(value.zone!==c.zone&&value.zone!=='inbox'&&!value.folder){const occupied=board.cards.filter(x=>!x.folder&&x.zone===value.zone&&x.id!==c.id).length;value.x=(occupied%2)*0.9;value.y=(Math.floor(occupied/2)%3)*0.45;}
- if(await changeBoard(()=>{if(existing)Object.assign(existing,value);else board.cards.unshift(value);})){close();if(isNew){boardFilter='';boardKind='';$('#board-search').value='';$('#board-kind').value='';renderBoard();$('#inbox-cards').scrollTop=0;}toast('安排已保存');}
+ const value={...c,title:String(fd.get('title')).trim(),target,zone:String(fd.get('zone')),folder:String(fd.get('folder')||'')};if(value.folder!==c.folder)delete value.order;if(value.zone!==c.zone&&value.zone!=='inbox'&&!value.folder){const occupied=board.cards.filter(x=>!x.folder&&x.zone===value.zone&&x.id!==c.id).length;value.x=(occupied%2)*0.9;value.y=(Math.floor(occupied/2)%3)*0.45;}
+ if(await changeBoard(()=>{if(existing){if(value.folder!==existing.folder)delete existing.order;Object.assign(existing,value);}else board.cards.unshift(value);})){close();if(isNew){boardFilter='';boardKind='';$('#board-search').value='';$('#board-kind').value='';renderBoard();$('#inbox-cards').scrollTop=0;}toast('安排已保存');}
  };
  if(existing){$('#card-task').onclick=()=>todoEditor('',c.id);$('#card-remove').onclick=async()=>{if(await changeBoard(()=>{board.cards=board.cards.filter(x=>x.id!==id);visibleCards().filter(x=>x.folder===id).forEach(x=>{x.folder='';x.zone='inbox';});board.todos.filter(x=>x.card===id).forEach(x=>{if(!x.project_id&&c.type==='project')x.project_id=c.target;x.card='';});})){close();toast('已移除快捷方式，源会话与文件保留');}};
  if(c.type==='thread'){$('#card-link').onclick=()=>copy('codex://threads/'+c.target);$('#card-resume').onclick=()=>copy('codex resume '+c.target);}}
@@ -98,7 +92,7 @@ function wireBoard(){
   const el=id==='inbox'?$('#inbox-cards'):$('#zone-'+id);
   el.ondragover=e=>{e.preventDefault();e.dataTransfer.dropEffect='move';el.classList.add('drop-active');};
   el.ondragleave=e=>{if(!el.contains(e.relatedTarget))el.classList.remove('drop-active');};
-  el.ondrop=e=>{e.preventDefault();el.classList.remove('drop-active');const c=cardBy(e.dataTransfer.getData('text/plain'));if(!c)return;const r=el.getBoundingClientRect(),style=getComputedStyle(el),w=parseFloat(style.getPropertyValue('--desk-card-width'))||148,h=parseFloat(style.getPropertyValue('--desk-card-height'))||62;changeBoard(()=>{c.zone=id;c.folder='';c.x=Math.max(0,Math.min(1,(e.clientX-r.left-w/2)/Math.max(1,r.width-w)));c.y=Math.max(0,Math.min(1,(e.clientY-r.top-h/2)/Math.max(1,r.height-h)));});};
+  el.ondrop=e=>{e.preventDefault();el.classList.remove('drop-active');const c=cardBy(e.dataTransfer.getData('text/plain'));if(!c)return;const r=el.getBoundingClientRect(),style=getComputedStyle(el),w=parseFloat(style.getPropertyValue('--desk-card-width'))||148,h=parseFloat(style.getPropertyValue('--desk-card-height'))||62;changeBoard(()=>{c.zone=id;c.folder='';delete c.order;c.x=Math.max(0,Math.min(1,(e.clientX-r.left-w/2)/Math.max(1,r.width-w)));c.y=Math.max(0,Math.min(1,(e.clientY-r.top-h/2)/Math.max(1,r.height-h)));});};
  }
  $('#board-layout-toggle').onclick=()=>{autoLayout=!autoLayout;$('#board-layout-toggle').textContent=autoLayout?'自由摆放':'自动排列';$('#board-layout-toggle').setAttribute('aria-pressed',autoLayout);renderBoard();};
  $('#new-folder').onclick=()=>cardEditor();$('#new-thread').onclick=()=>cardEditor('','thread');$('#new-directory').onclick=()=>cardEditor('','directory');

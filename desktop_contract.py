@@ -1,7 +1,7 @@
 """Versioned tool contracts; shared by MCP, HTTP and generated OpenAPI."""
 import re
 
-VERSION='1.2.0'
+VERSION='1.2.1'
 TEXT={'type':'string','maxLength':12000}
 PID={'type':'string','pattern':r'^[a-zA-Z0-9_-]{1,80}$'}
 REV={'type':'integer','minimum':0,'description':'先读取列表或项目返回的 revision；冲突后重新读取，不强行覆盖。'}
@@ -37,7 +37,7 @@ DATE={'type':'string','pattern':r'^\d{4}-\d{2}-\d{2}$'}
 TASK_FIELDS={'title':{'type':'string','maxLength':1000},'project_id':{'type':'string','maxLength':80},'start_date':DATE,'date':DATE,'status':{'type':'string','enum':['todo','doing','blocked','done']},'done':{'type':'boolean'},'progress':{'type':'integer','minimum':0,'maximum':100},'dependencies':{'type':'array','items':ITEM_ID,'maxItems':100},'milestone':{'type':'boolean'},'repeat':{'type':'string','enum':['none','daily','weekly','monthly']},'notes':TEXT,'card':{'type':'string','maxLength':100}}
 TASK=obj({'id':ITEM_ID,**TASK_FIELDS},['title','date'])
 TASK_PATCH=obj(TASK_FIELDS)
-CARD_FIELDS={'type':{'type':'string','enum':['project','thread','directory','folder']},'target':TEXT,'title':TEXT,'folder':{'type':'string','maxLength':100},'zone':{'type':'string','enum':['inbox','do','plan','delegate','later']},'x':{'type':'number','minimum':0,'maximum':1},'y':{'type':'number','minimum':0,'maximum':1}}
+CARD_FIELDS={'order':{'type':'integer','minimum':0,'maximum':1000000,'description':'文件夹内排序，数值小的靠前；未设置的卡片排在后面，同值按 cards 数组顺序。'},'type':{'type':'string','enum':['project','thread','directory','folder']},'target':TEXT,'title':TEXT,'folder':{'type':'string','maxLength':100},'zone':{'type':'string','enum':['inbox','do','plan','delegate','later']},'x':{'type':'number','minimum':0,'maximum':1},'y':{'type':'number','minimum':0,'maximum':1}}
 CARD=obj({'id':ITEM_ID,**CARD_FIELDS},['type','title'])
 MAPPING=obj({'host':{'type':'string','enum':['local','server']},'from':{'type':'string','maxLength':4096},'to':{'type':'string','maxLength':4096}},['host','from','to'])
 MAPPINGS={'type':'array','items':MAPPING,'maxItems':100}

@@ -111,7 +111,10 @@ def edit_board(name,args):
             if is_task:
                 replacement=tasks.normalize(args['patch'],new['cards'],existing)
                 existing.clear();existing.update(replacement)
-            else:existing.update(args['patch'])
+            else:
+                patch=args['patch']
+                if 'folder' in patch and patch['folder']!=existing['folder'] and 'order' not in patch:existing.pop('order',None)
+                existing.update(patch)
         else:
             if is_task and any(id in t['dependencies'] for t in new['todos']):raise ValueError('其他任务仍依赖此任务，请先调整依赖关系')
             new[key]=[v for v in new[key] if v['id']!=id]

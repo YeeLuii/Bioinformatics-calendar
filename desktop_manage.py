@@ -5,7 +5,7 @@ import desktop_runtime as rt
 CODE=['desktop_server.py','desktop_runtime.py','desktop_state.py','desktop_manage.py','desktop_storage.py','desktop_repository.py','desktop_addresses.py','desktop_navigation.py','desktop_links.py','desktop_services.py','desktop_contract.py','desktop_mcp.py','deploy.py','deploy_codex.py','deploy.ps1','deploy.sh']
 CODE+=['desktop_tasks.py','desktop_history.py','desktop_diagnostics.py']
 WEB=['index.html','style.css','board.css','app.js','board.js','details.js','icon.svg']
-WEB+=['tasks.js','gantt.js','workspace.js','workspace.css']
+WEB+=['folders.js','tasks.js','gantt.js','workspace.js','workspace.css']
 DATA=['desktop_data.json','desktop_projects.json','desktop_project_links.json','desktop_threads.json','desktop_board_state.json']
 
 def init(dest):

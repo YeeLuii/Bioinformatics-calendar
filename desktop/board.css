@@ -75,3 +75,15 @@ body.board-mode .quadrant.delegate{background:#f5eff9}
 .axis-x{left:-10px;right:-10px}
 .axis-y{top:-16px;bottom:-8px}
 @media(max-width:760px){body.board-mode .matrix-wrap{padding:30px 16px 16px}body.board-mode .matrix{gap:16px}.axis-x{left:-8px;right:-8px}}
+
+/* Folder organization stays within the existing detail drawer. */
+.folder-toolbar,.folder-bulk{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;align-items:center}
+.folder-toolbar input,.folder-bulk input:not([type=checkbox]){border:1px solid var(--line);border-radius:6px;padding:8px;min-width:0;flex:1;width:100px}
+.folder-toolbar input{flex-basis:100%}.folder-toolbar select,.folder-bulk select{min-width:0;max-width:100%;flex:1}
+.folder-bulk{padding:12px;background:#f5f8f6;border-radius:8px;font-size:12px}.folder-bulk label{flex:1 0 65%;white-space:nowrap}.folder-bulk #folder-selected{color:var(--muted);white-space:nowrap}.folder-bulk select{flex-basis:65%}.folder-bulk #folder-new-name{flex-basis:100%}
+.folder-items{margin-top:16px;display:grid;gap:9px}.folder-items.grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.folder-item{border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0;background:white}.folder-item-main{display:flex;gap:8px;align-items:center;min-width:0}.folder-item input{flex:none;accent-color:var(--green)}
+.folder-open{display:flex;gap:9px;align-items:center;flex:1;min-width:0;border:0;background:none;text-align:left;padding:2px;color:var(--ink);font-size:14px}.folder-item-title{overflow-wrap:anywhere;min-width:0}.folder-item-title small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.folder-order-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:5px}.folder-order-actions button{font-size:12px;color:#527563;background:#f5f8f6;border:0;padding:4px 7px;border-radius:4px}
+.folder-item.dragging{opacity:.5}.folder-item.folder-drop-before{border-top:3px solid var(--green)}.folder-item.folder-drop-after{border-bottom:3px solid var(--green)}
+@media(max-width:460px){.folder-items.grid{grid-template-columns:1fr}.folder-order-actions{justify-content:space-between}.folder-toolbar .button{padding:8px 10px}}

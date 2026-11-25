@@ -45,7 +45,8 @@ flowchart TD
 | `deploy.py` | 工作区部署、HTTP/MCP 自检、服务启停和运行记录 |
 | `deploy_codex.py` | 官方 CLI 注册适配、配置字节备份、校验和失败恢复 |
 | `desktop/app.js` | 项目资料、结果和文件查询视图 |
-| `desktop/board.js` | 拖放、文件夹、计划本 |
+| `desktop/board.js` | 桌面拖放与计划本 |
+| `desktop/folders.js` | 文件夹搜索、列表、手动排序与批量分组，复用桌面保存接口 |
 | `desktop/details.js` | 结构化详情、项目编辑和会话关联 |
 | `desktop/tasks.js` | 任务列表与编辑，共享计划本任务和公开接口 |
 | `desktop/gantt.js` | 日期轴、依赖与里程碑显示，拖动改期 |
