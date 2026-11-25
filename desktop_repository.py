@@ -2,6 +2,7 @@
 import pathlib
 import desktop_addresses as addresses
 import desktop_runtime as rt
+import desktop_history as history
 from desktop_storage import read_json, write_json
 path=rt.path
 remap=rt.remap
@@ -9,7 +10,10 @@ local_path=rt.local_path
 workspace_lock=rt.workspace_lock
 CATEGORIES=rt.CATEGORIES
 
-def overrides():return read_json(path('desktop_projects.json'),{'schema_version':1,'revision':0,'projects':[]})
+def overrides():
+    data=read_json(path('desktop_projects.json'),{'schema_version':1,'revision':0,'projects':[]})
+    data.pop('_history',None)
+    return data
 
 def overview(include_archived=False, saved_projects=None):
     source=read_json(path('desktop_data.json'),{})
@@ -17,7 +21,8 @@ def overview(include_archived=False, saved_projects=None):
     projects={p['id']:dict(p) for p in source.get('projects',[])}
     for p in (overrides() if saved_projects is None else saved_projects)['projects']:projects[p['id']]={**projects.get(p['id'],{}),**p}
     for p in projects.values():
-        for k in ['summary','status','current_version','scope','todo','local','remote']:p.setdefault(k,'')
+        for k in ['summary','status','current_version','scope','todo','local','remote','source','observed_at','reviewed_at','research_stage','run_observed_at','run_source','updated_at']:p.setdefault(k,'')
+        p.setdefault('run_status','unknown');p.setdefault('adoption_status','pending');p.setdefault('result_versions',[])
         p.setdefault('counts',{});p.setdefault('name',p['id'])
         p.setdefault('addresses',[])
         p['ssh_alias']=p.get('ssh_alias') or rt.CONFIG.get('ssh_alias','')
@@ -55,14 +60,38 @@ def save_project(obj):
         p=obj.get('project',{})
         import re
         if not re.fullmatch(r'[a-zA-Z0-9_-]{1,80}',p.get('id','')):raise ValueError('项目 ID 只能包含字母、数字、连字符和下划线')
-        allowed=['id','name','summary','status','current_version','scope','todo','local','remote','ssh_alias']
+        allowed=['id','name','summary','status','current_version','scope','todo','local','remote','ssh_alias','source','observed_at','reviewed_at','research_stage','run_observed_at','run_source']
         clean={k:p.get(k,'').strip() for k in allowed if isinstance(p.get(k,''),str)}
         if len(clean)!=len(allowed) or not clean['name'] or any(len(v)>12000 for v in clean.values()):raise ValueError('项目内容无效')
         if clean['ssh_alias'] and (clean['ssh_alias'].startswith('-') or not re.fullmatch(r'[\w.@:-]+',clean['ssh_alias'])):raise ValueError('SSH 别名无效')
         clean['addresses']=addresses.clean_addresses(p.get('addresses',[]))
+        clean['run_status']=p.get('run_status','unknown')
+        clean['adoption_status']=p.get('adoption_status','pending')
+        clean['result_versions']=p.get('result_versions',[])
+        from desktop_contract import FIELDS,validate
+        for key in ['run_status','adoption_status','result_versions']:validate(clean[key],FIELDS[key],key)
+        import datetime
+        for record in [clean]+clean['result_versions']:
+            for key in ['observed_at','reviewed_at','run_observed_at']:
+                value=record.get(key,'')
+                if value:
+                    try:datetime.datetime.fromisoformat(value.replace('Z','+00:00'))
+                    except ValueError:raise ValueError(key+' 须为 ISO 日期或时间')
+        ids=[v['id'] for v in clean['result_versions']]
+        if len(set(ids))!=len(ids):raise ValueError('结果版本 ID 不可重复')
+        clean['updated_at']=rt.now()
         if 'archived' in p:
             if not isinstance(p['archived'],bool):raise ValueError('归档状态必须为布尔值')
             clean['archived']=p['archived']
         entries={p['id']:p for p in current['projects']};entries[clean['id']]=clean
         result=dict(schema_version=1,revision=current['revision']+1,projects=list(entries.values()))
-        write_json(path('desktop_projects.json'),result);return result
+        before=current
+        if not any(x['id']==clean['id'] for x in current['projects']):
+            source=read_json(path('desktop_data.json'),{})
+            generated=next((x for x in source.get('projects',[]) if x['id']==clean['id']),None)
+            if generated:
+                defaults={'addresses':[],'result_versions':[],'run_status':'unknown','adoption_status':'pending','archived':False}
+                logical={k:generated.get(k,defaults.get(k,'')) for k in clean}
+                logical['name']=generated.get('name',generated['id'])
+                before={**current,'projects':current['projects']+[logical]}
+        history.write('projects',before,result,'更新项目：'+clean['name']);return result

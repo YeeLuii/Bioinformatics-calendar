@@ -86,7 +86,13 @@
 
 最多 1000 张卡片。项目 target 必须已经登记，包括归档项目。目录卡片只支持绝对路径，实际打开时还会检查目录存在。
 
-待办字段：`id`（唯一字符串）、`title`（1–1000 字符）、`date`（有效 YYYY-MM-DD）、`card`（存在的卡片 ID 或空字符串）、`done`（布尔值）。最多 3000 条。日期按浏览器本机日历解释，没有时刻、时区换算、重复规则或提醒调度。
+待办基础字段：`id`（唯一字符串）、`title`（1–1000 字符）、`date`（有效 YYYY-MM-DD）、`card`（存在的卡片 ID 或空字符串）、`done`（布尔值）。最多3000条。1.2新增 project_id、start_date、status、progress、dependencies、milestone、repeat、notes；日期按浏览器本机日历解释，没有时刻或提醒调度，重复任务在完成当前实例时生成下一次。完整规则见 [API第7节](API.md#7-任务甘特与卡片--12)。
+
+旧文件仅读取时不会改写；返回值在内存中补默认字段，并从项目卡片推导project_id。保存后新增字段与旧字段共存，旧日历继续识别date/done。移除卡片保留project_id。next_instance_id和previous_instance_id由系统用于重复任务去重，客户端不能手工修改。
+
+项目、会话关联、桌面三个JSON文件可含内部 `_history` 数组，每个存储保留最近100条变更，与数据同时原子写入。普通API响应不暴露该字段；专用history接口读取。不要用旧程序覆盖1.2工作区，否则可能丢失新字段与历史。迁移包保留历史，但不包含研究文件。
+
+项目1.2来源字段为source/observed_at/reviewed_at，运行字段run_status/run_source/run_observed_at与研究阶段research_stage、采用状态adoption_status相互独立。updated_at由服务维护。result_versions登记多个分析子模块的版本（id/name/version/category/status/scope/todo/path/source/observed_at/reviewed_at），其中todo记录该结果版本的待完成事项；不要求所有模块采用同一版本。写入规则见 [完整接口](API.md#10-项目来源状态与结果版本)。
 
 ## 可选 SQLite 文件索引
 

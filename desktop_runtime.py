@@ -6,6 +6,7 @@ APP_DIR=pathlib.Path(__file__).resolve().parent
 DATA_DIR=APP_DIR
 WORKSPACE_ROOT=APP_DIR.parent
 CONFIG={}
+CONFIG_PATH=APP_DIR/'workspace.json'
 WRITE_LOCK=threading.Lock()
 CATEGORIES={'paper':'可用于文章的结果','exploratory':'探索性结果','intermediate':'中间文件','logs':'日志与审计','support':'输入、代码与参考','pending':'待判定 / 待复核'}
 
@@ -17,8 +18,9 @@ def configure_console():
         if hasattr(stream,'reconfigure'):stream.reconfigure(encoding='utf-8')
 
 def configure(config_path=None,data_dir=None):
-    global CONFIG,DATA_DIR,WORKSPACE_ROOT
+    global CONFIG,DATA_DIR,WORKSPACE_ROOT,CONFIG_PATH
     p=pathlib.Path(config_path).resolve() if config_path else APP_DIR/'workspace.json'
+    CONFIG_PATH=p
     CONFIG=read_json(p,{})
     if CONFIG.get('schema_version',1)!=1:raise ValueError('不支持的工作区配置版本')
     base=p.parent
@@ -33,7 +35,7 @@ def now():return datetime.datetime.now().astimezone().isoformat(timespec='second
 def remap(value,host='local'):
     if not value:return ''
     s=str(value).replace('\\','/')
-    mappings=sorted(CONFIG.get('path_mappings',[]),key=lambda m:len(m['from']),reverse=True)
+    mappings=sorted(read_json(CONFIG_PATH,CONFIG).get('path_mappings',[]),key=lambda m:len(m['from']),reverse=True)
     for m in mappings:
         if m.get('host','local')!=host:continue
         old=m['from'].replace('\\','/').rstrip('/')

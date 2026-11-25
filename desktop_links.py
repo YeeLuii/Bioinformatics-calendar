@@ -2,6 +2,8 @@
 import re
 import desktop_runtime as runtime
 import desktop_repository as repository
+import desktop_history as history
+import copy
 from desktop_storage import read_json as jread
 UUID=re.compile(r'^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$',re.I)
 
@@ -25,8 +27,9 @@ def save_project_links(obj):
             if t['id'] in seen:continue
             seen.add(t['id']);clean.append({'id':t['id'],'title':t['title'],'provider':'codex'})
         saved=jread(runtime.path('desktop_project_links.json'),{'revision':0,'projects':{}})
+        before=copy.deepcopy(saved)
         saved['revision']+=1;saved['projects'][obj['project_id']]=clean
-        runtime.write_json(runtime.path('desktop_project_links.json'),saved)
+        history.write('links',before,saved,'更新项目会话关联')
         return project_links(obj['project_id'])
 
 def linked_thread_target(project_id,thread_id):

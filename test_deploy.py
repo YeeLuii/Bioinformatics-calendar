@@ -144,7 +144,7 @@ class DeploymentTests(unittest.TestCase):
             try:
                 self.assertEqual(result['status'], 'ready')
                 self.assertNotEqual(result['port'], port)
-                self.assertEqual(result['mcp_tools'], 10)
+                self.assertEqual(result['mcp_tools'], len(deploy.contract.TOOLS))
                 self.assertEqual(result['mcp_registration']['status'], 'disabled')
                 projects = workspace / 'data/desktop_projects.json'
                 original = projects.read_bytes()

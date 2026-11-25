@@ -1,5 +1,5 @@
 """Real stdio transport and public HTTP contract checks in isolated workspaces."""
-import json, pathlib, subprocess, sys, tempfile, unittest, zipfile
+import json, pathlib, re, subprocess, sys, tempfile, unittest, zipfile
 import desktop_manage as manage
 import desktop_runtime as rt
 import desktop_contract as contract
@@ -33,7 +33,7 @@ class MCPTests(unittest.TestCase):
             results={r['id']:r for r in map(json.loads,run.stdout.decode('utf8').splitlines())}
             self.assertEqual(len(results),len(requests)-1)
             self.assertEqual(results[1]['result']['protocolVersion'],'2025-11-25')
-            self.assertEqual(len(results[2]['result']['tools']),10)
+            self.assertEqual({t['name'] for t in results[2]['result']['tools']},set(contract.TOOLS))
             self.assertEqual(json.loads(results[3]['result']['contents'][0]['text'])['openapi'],'3.1.0')
             for i in [10,11,12,14,15,16,17,18,19,20,21]:
                 self.assertFalse(results[i]['result']['isError'],results[i])
@@ -54,7 +54,7 @@ class MCPTests(unittest.TestCase):
     def test_http_routes_have_matching_tool_contracts(self):
         doc=contract.openapi()
         for method,path,name in contract.ROUTES:
-            actual=path.replace('{project_id}','study-1')
+            actual=re.sub(r'\{[^}]+\}','study-1',path)
             match=contract.route(method,actual)
             self.assertEqual(match[0],name);self.assertEqual(doc['paths'][path][method]['operationId'],name)
         self.assertIsNone(contract.route('GET','/api/v1/projects/study/unknown'))

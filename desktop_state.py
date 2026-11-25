@@ -3,6 +3,8 @@ import desktop_repository as repository
 """Private visual arrangements, independent of research files and Codex projects."""
 import datetime, json, math, os, pathlib, re, threading
 import desktop_runtime as runtime
+import desktop_tasks as tasks
+import desktop_history as history
 from desktop_runtime import read_json as jread
 
 def state_path():return runtime.path('desktop_board_state.json')
@@ -19,7 +21,9 @@ def initial():
     return dict(revision=0,cards=cards,todos=[],saved_at=None)
 
 def read():
-    return jread(state_path()) if state_path().exists() else initial()
+    raw=jread(state_path()) if state_path().exists() else initial()
+    raw.pop('_history',None)
+    return tasks.normalize_board(raw)
 
 def validate(s):
     cards=s.get('cards');todos=s.get('todos')
@@ -43,28 +47,25 @@ def validate(s):
     folders={c['id'] for c in cards if c['type']=='folder'}
     for c in cards:
         if c['folder'] and (c['folder'] not in folders or c['type']=='folder'):raise ValueError('文件夹不能嵌套，卡片须属于现有文件夹')
-    taskids=set()
-    for t in todos:
-        if not isinstance(t,dict) or not isinstance(t.get('id'),str) or t['id'] in taskids:raise ValueError('待办标识无效')
-        taskids.add(t['id'])
-        if not isinstance(t.get('title'),str) or not 1<=len(t['title'].strip())<=1000:raise ValueError('请填写待办标题（最多 1000 字）')
-        if not isinstance(t.get('date'),str) or len(t['date'])!=10:raise ValueError('待办日期无效')
-        datetime.date.fromisoformat(t['date'])
-        if not isinstance(t.get('done'),bool) or (t.get('card') and t['card'] not in ids):raise ValueError('待办关联卡片无效')
+    tasks.validate(todos,cards,projects)
 
-def save(obj):
+def save_unlocked(obj,old=None,label='调整桌面与日程'):
+    old=read() if old is None else old
+    if obj.get('revision')!=old['revision']:return None
+    obj=tasks.normalize_board(obj,old)
+    tasks.repeat_completed(obj,old)
+    validate(obj)
+    obj={k:obj[k] for k in ['cards','todos']}
+    obj.update(revision=old['revision']+1,saved_at=runtime.now())
+    if state_path().exists():runtime.path('desktop_board_state.previous.json').write_bytes(state_path().read_bytes())
+    history.write('board',old,obj,label)
+    obj.pop('_history',None)
+    return obj
+
+
+def save(obj,label='调整桌面与日程'):
     with runtime.workspace_lock():
-        STATE=state_path()
-        old=read()
-        if obj.get('revision')!=old['revision']:return None
-        validate(obj)
-        obj={k:obj[k] for k in ['cards','todos']}
-        obj.update(revision=old['revision']+1,saved_at=datetime.datetime.now().astimezone().isoformat(timespec='seconds'))
-        tmp=STATE.with_suffix('.tmp')
-        tmp.write_text(json.dumps(obj,ensure_ascii=False,indent=2),encoding='utf-8')
-        if STATE.exists():runtime.path('desktop_board_state.previous.json').write_bytes(STATE.read_bytes())
-        os.replace(tmp,STATE)
-        return obj
+        return save_unlocked(obj,label=label)
 
 def card_target(id):
     c=next((c for c in read()['cards'] if c['id']==id),None)

@@ -1,8 +1,8 @@
-# 完整接口说明 · v1.1.0
+# 完整接口说明 · v1.2.0
 
 本服务管理科研项目、日程和分析结果的引用。默认 HTTP 基址为 `http://127.0.0.1:8828`，实际端口以工作区配置为准。MCP 使用本地 stdio，不通过 HTTP。
 
-[OpenAPI 3.1](../openapi.json) 描述稳定的 `/api/v1/` 项目接口；[Agent 指南](../AGENT_API.md) 描述调用流程。本文同时记录网页内部接口，方便维护者集成日历与结果索引。内部接口不承诺跨版本兼容。
+[OpenAPI 3.1](../openapi.json) 描述稳定的 `/api/v1/` 项目、任务、卡片、变更历史和迁移接口；[Agent 指南](../AGENT_API.md) 描述调用流程。本文同时记录网页内部接口。内部接口不承诺跨版本兼容。
 
 ## 1. 公共约定
 
@@ -213,4 +213,86 @@ call("/api/v1/projects/" + project_id, "PATCH", {
 }
 ```
 
-此接口替换整个安排，不是局部 patch。不要直接把上面的单卡示例提交到已有工作区。卡片、待办、文件索引的完整字段限制见 [数据模型](DATA_MODEL.md)。目前 MCP 的 10 个工具只管理项目及其会话关联，日历由网页或上述内部 HTTP 接口管理。
+此接口替换整个安排，不是局部 patch。不要直接把上面的单卡示例提交到已有工作区。新集成优先使用下面的逐项任务和卡片接口。卡片、待办、文件索引的完整字段限制见 [数据模型](DATA_MODEL.md)。
+
+## 7. 任务、甘特与卡片 · 1.2
+
+日历与甘特图共享 `desktop_board_state.json` 中的 todos；没有第二份任务数据库。所有任务和卡片写入共用该文件的 revision，读取 `tasks_list` 或 `cards_list` 的 revision 后写入。网页、HTTP 和 MCP 使用同一校验与业务操作。
+
+| MCP | HTTP | 请求 | 响应 |
+|---|---|---|---|
+| `tasks_list` | GET `/api/v1/tasks` | 可选查询 `project_id` | `{revision,tasks,warnings}` |
+| `task_create` | POST `/api/v1/tasks` | `{expected_revision,task}` | `{revision,task,tasks,warnings}` |
+| `task_update` | PATCH `/api/v1/tasks/{task_id}` | `{expected_revision,patch}` | 同上 |
+| `task_remove` | POST `/api/v1/tasks/{task_id}/remove` | `{expected_revision}` | `{revision,tasks,warnings}` |
+| `cards_list` | GET `/api/v1/cards` | 无 | `{revision,cards}` |
+| `card_create` | POST `/api/v1/cards` | `{expected_revision,card}` | `{revision,card,cards}` |
+| `card_update` | PATCH `/api/v1/cards/{card_id}` | `{expected_revision,patch}` | 同上 |
+| `card_remove` | POST `/api/v1/cards/{card_id}/remove` | `{expected_revision}` | `{revision,cards}` |
+
+任务最小创建字段为 title 和 date；建议调用方提供稳定 id，便于断线重试。同 ID 且提交字段与现有项一致的创建返回现有内容、不增加 revision；同 ID 不同内容返回 409，绝不静默覆盖。项目创建也遵循该约定。服务器分配 ID 的请求不能仅靠原请求自动去重。
+
+```json
+{
+  "expected_revision": 4,
+  "task": {
+    "id": "review-expression-v3",
+    "title": "复核重复样本一致性",
+    "project_id": "rnaseq",
+    "start_date": "2026-11-25",
+    "date": "2026-11-27",
+    "status": "todo",
+    "progress": 0,
+    "dependencies": [],
+    "milestone": false,
+    "repeat": "none",
+    "notes": "检查样本相关性与异常样本依据"
+  }
+}
+```
+
+任务字段与规则：
+
+- id：1–100 位字母、数字、连字符或下划线；title：1–1000 字符；notes：最多12000字符。
+- project_id：已登记项目 ID 或空字符串，关联项目可归档。card：兼容旧卡片 ID，可省略。移除卡片不解除已有项目关联。
+- start_date/date：有效 YYYY-MM-DD，分别为开始、截止日期，开始不得晚于截止。省略 start_date 时等于 date。里程碑 milestone=true 时两者必须相同。
+- status：todo、doing、blocked、done；progress 为0–100整数。done 与 status 同步；完成任务为100%，重新打开任务会将原100%重置为0%。progress 是任务工作进度，不是科研结论可信度。
+- dependencies：最多100个现有任务 ID，无重复，不得自依赖或成环。删除仍被依赖的任务会被拒绝。前置任务未完成、排期重叠会返回 warnings；不会自动改其他任务的日期。
+- repeat：none、daily、weekly、monthly。由未完成变为完成时，仅创建一条下次任务；完成时间不会让系统补生无数过期任务。下次日期按本次计划日期推进，月末截到下月有效日；重复取消完成/再完成不会重复创建。后续实例可单独改期。
+- 为兼容旧数据，读任务时补足默认字段；仅读取不改写文件。旧卡片关联可推导 project_id。旧版客户端整体保存不会清空同 ID 任务未提供的新字段。
+
+卡片字段沿用第6节与数据模型。type/title必需；target/folder默认为空，zone默认inbox，x/y默认0。文件夹是 `type=folder` 的卡片；移除文件夹后其子卡片返回待安排区。所有操作只改元数据。
+
+## 8. 变更记录与安全撤销
+
+| MCP | HTTP | 约定 |
+|---|---|---|
+| `history_list` | GET `/api/v1/history` | `{revision,entries}` |
+| `history_undo` | POST `/api/v1/history/{entry_id}/undo` | `{expected_revision}` -> `{revision,undone,entry}` |
+
+历史 revision 是项目、关联、桌面三个存储 revision 之和，只使用 history_list 返回的值。每条 entry 包含 id、store、at、label、changes；changes 元素为 `{collection,key,before,after}`。已撤销项有 undone_by，撤销动作自身记录 undo_of。
+
+每个存储最多保留100条有内容的变更。记录嵌入对应元数据文件，和业务数据一起原子写入，普通项目/桌面响应不携带历史。撤销检查本次修改涉及的字段：无关的后续字段保留；同一字段发生后续修改则409拒绝。系统更新时间不作为覆盖冲突。创建撤销不能留下引用已不存在项目的卡片或任务；此时应归档项目。已被依赖的任务不能因撤销而变成孤立引用。迁移映射使用配置备份，不属于这三类历史。
+
+## 9. 诊断、路径迁移与导出
+
+| MCP | HTTP | 请求与返回 |
+|---|---|---|
+| `workspace_diagnostics` | GET `/api/v1/diagnostics` | `{checked_at,checks,locations,path_mappings,config_revision}` |
+| `path_mappings_preview` | POST `/api/v1/path-mappings/preview` | `{mappings}` -> `{locations,changes,config_revision}` |
+| `path_mappings_set` | PUT `/api/v1/path-mappings` | `{mappings,expected_revision}` -> 新诊断结果 |
+| `workspace_export` | GET `/api/v1/export` | 必需format=markdown/ics/json，可选project_id -> `{format,filename,content}` |
+
+所有 HTTP POST/PUT/PATCH 均需令牌，包括只读预览。诊断 locations 元素为 project_id、label、kind、original_path、path、status；本地目录存在为available，不存在为missing_at_path，服务器和网页为unverified。诊断只检查登记本地位置，不执行SSH、不读取全目录内容，不推断客户端MCP已加载。
+
+映射格式为 `[{"host":"local","from":"D:/old","to":"E:/new"}]`，host可为local/server；from/to必须为绝对路径，最长前缀优先。先预览后使用返回的config_revision保存；只修改工作区配置，原登记路径及科研文件均保持。旧配置备份为 workspace.mapping-backup.json（自定义配置文件名对应变化），所有进程后续解析路径会重新读取映射。备份可能含个人工作区配置，不应公开。
+
+导出 JSON 是可读报告，不是完整迁移包；迁移仍用 desktop_manage.py pack。Markdown包含项目状态来源和各结果版本。ICS导出当前已生成任务为全天事件，截止日在文件中按排他的次日DTEND表示，UTF-8正确折行；不包含后台提醒，不添加RRULE，避免与完成时生成的重复实例重复计数。导出只返回文本，客户端自行下载，不写任意磁盘路径。
+
+## 10. 项目来源、状态与结果版本
+
+1.2新增可选字段：source（来源说明）、observed_at（资料观察日期/时间）、reviewed_at（用途复核日期/时间）、research_stage（研究阶段）、run_status（unknown/queued/running/succeeded/failed/cancelled）、run_observed_at、run_source、adoption_status（pending/exploratory/adopted）。updated_at由存储自动维护，不接受客户端修改，且不代表来源刚刚观察过。
+
+result_versions是最多100条的数组，每条必需id/name/version；可选category（六类结果分类）、status（pending/exploratory/adopted/superseded）、scope/todo/path/source/observed_at/reviewed_at。todo记录该版本待完成事项。条目ID稳定且唯一；更新时提供数组会替换列表，省略则保留。修改某一结果版本前先读项目并保留其他版本。不同分析子模块可以分别采用不同版本。
+
+所有非空日期时间采用ISO格式。run_status只说明登记或适配器观察到的运行状况，不会自动改变adoption_status、result_versions分类或复核时间。`reviewed`也不表示完成文件指纹校验。

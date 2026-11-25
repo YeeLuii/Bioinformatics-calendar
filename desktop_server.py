@@ -53,7 +53,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             public=contract.route('get',u.path)
             if public:
                 operation,args=public
-                if operation=='projects_list':args['include_archived']=v('include_archived','false').lower()=='true'
+                for key,schema in contract.TOOLS[operation][1]['properties'].items():
+                    if key not in a or key in args:continue
+                    raw=v(key)
+                    if schema.get('type')=='boolean':
+                        if raw.lower() not in {'true','false'}:raise ValueError('布尔查询参数须为true/false')
+                        args[key]=raw.lower()=='true'
+                    elif schema.get('type')=='integer':args[key]=int(raw)
+                    else:args[key]=raw
                 return self.send(services.execute(operation,args))
             if u.path=='/api/board-state':return self.send(desktop_state.read())
             if u.path=='/api/threads':return self.send(links.sources())
@@ -90,7 +97,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             exports={'/export/files.tsv':HERE/'tables/unified_file_inventory.tsv','/export/summary.md':HERE/'UNIFIED_RESULTS.md'}
             if u.path in exports:return self.file(exports[u.path],download=True)
             if u.path in ['/', '/index.html']:return self.file(WEB/'index.html')
-            if u.path in ['/style.css','/app.js','/board.css','/board.js','/details.js','/icon.svg']:return self.file(WEB/u.path.lstrip('/'))
+            if u.path in ['/style.css','/app.js','/board.css','/board.js','/details.js','/icon.svg','/tasks.js','/gantt.js','/workspace.js','/workspace.css']:return self.file(WEB/u.path.lstrip('/'))
             return self.send({'error':'Not found'},404)
         except services.NotFoundError as e:return self.send({'error':str(e)},404)
         except (OSError,ValueError,KeyError,TypeError,sqlite3.Error) as e:return self.send({'error':str(e)},400)

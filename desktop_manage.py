@@ -3,7 +3,9 @@ import argparse, json, pathlib, zipfile, sys
 import desktop_runtime as rt
 
 CODE=['desktop_server.py','desktop_runtime.py','desktop_state.py','desktop_manage.py','desktop_storage.py','desktop_repository.py','desktop_addresses.py','desktop_navigation.py','desktop_links.py','desktop_services.py','desktop_contract.py','desktop_mcp.py','deploy.py','deploy_codex.py','deploy.ps1','deploy.sh']
+CODE+=['desktop_tasks.py','desktop_history.py','desktop_diagnostics.py']
 WEB=['index.html','style.css','board.css','app.js','board.js','details.js','icon.svg']
+WEB+=['tasks.js','gantt.js','workspace.js','workspace.css']
 DATA=['desktop_data.json','desktop_projects.json','desktop_project_links.json','desktop_threads.json','desktop_board_state.json']
 
 def init(dest):
@@ -40,7 +42,7 @@ def pack(output,include_index=False):
         if (rt.APP_DIR/'AI4S_ARCHITECTURE.md').is_file():z.write(rt.APP_DIR/'AI4S_ARCHITECTURE.md','ARCHITECTURE.md')
         for name in ['AGENT_API.md','openapi.json']:
             if (rt.APP_DIR/name).is_file():z.write(rt.APP_DIR/name,name)
-        for name in ['docs/API.md','docs/DATA_MODEL.md','docs/USAGE.md','docs/DEPLOYMENT.md','examples/http_client.py','examples/create_demo.py','examples/export_openapi.py']:
+        for name in ['docs/API.md','docs/DATA_MODEL.md','docs/USAGE.md','docs/DEPLOYMENT.md','examples/http_client.py','examples/create_demo.py','examples/export_openapi.py','examples/import_run_snapshot.py']:
             if (rt.APP_DIR/name).is_file():z.write(rt.APP_DIR/name,name)
     print(json.dumps({'archive':str(target),'bytes':target.stat().st_size,'includes_file_index':include_index},ensure_ascii=False))
 

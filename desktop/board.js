@@ -1,4 +1,5 @@
 'use strict';
+let autoLayout=false;
 let board,threadSources=[],boardBusy=false,boardReady=false,boardFilter='',boardKind='',activeFolder='';
 const zoneNames={inbox:'待安排',do:'重要且紧急',plan:'重要不紧急',delegate:'紧急不重要',later:'不紧急不重要'};
 const typeNames={project:'研究项目',thread:'Codex 会话',folder:'桌面文件夹',directory:'目录快捷方式'};
@@ -14,12 +15,12 @@ async function boardInit(){
 async function changeBoard(fn){
  if(boardBusy){toast('正在保存，请稍候');return false;}
  const previous=structuredClone(board);fn();boardBusy=true;$('#board-save').textContent='正在保存…';
- try{board=await api('/api/board-state',board);renderBoard();renderCalendar();return true;}catch(e){board=previous;renderBoard();toast('未保存：'+e.message);return false;}finally{boardBusy=false;}
+ try{board=await api('/api/board-state',board);renderBoard();renderCalendar();if(typeof loadTasks==='function'){try{await loadTasks();}catch(e){toast('安排已保存，但同步视图失败，请刷新页面。');}}return true;}catch(e){board=previous;renderBoard();toast('未保存：'+e.message);return false;}finally{boardBusy=false;}
 }
 function cardHTML(c,positioned=false){
  const children=visibleCards().filter(x=>x.folder===c.id).length;
  const style=positioned?` style="left:${c.x*100}%;top:${c.y*100}%;translate:-${c.x*100}% -${c.y*100}%"`:'';
- return `<article class="desk-item ${c.type}" draggable="true" data-card="${esc(c.id)}"${style}><button class="card-face" data-card-go="${esc(c.id)}" title="${esc(c.title)}"><span class="desk-icon">${typeIcons[c.type]}</span><span class="desk-title">${esc(c.title)}</span><span class="desk-type">${c.type==='folder'?children+' 个项目 / 会话':typeNames[c.type]}</span></button><button class="card-more" data-card-edit="${esc(c.id)}" aria-label="安排 ${esc(c.title)}" title="安排、关联待办或修改">···</button></article>`;
+ return `<article class="desk-item ${c.type}" draggable="true" data-card="${esc(c.id)}"${style}><button class="card-face" data-card-go="${esc(c.id)}" title="${esc(c.title)}"><span class="desk-icon">${typeIcons[c.type]}</span><span class="desk-title">${esc(c.title)}</span><span class="desk-type">${esc(c.type==='folder'?children+' 个项目 / 会话':c.type==='project'?(projectBy(c.target)?.research_stage||projectBy(c.target)?.status||typeNames[c.type]):typeNames[c.type])}</span></button><button class="card-more" data-card-edit="${esc(c.id)}" aria-label="安排 ${esc(c.title)}" title="安排、关联待办或修改">···</button></article>`;
 }
 function wireCards(root){
  root.querySelectorAll('[data-card-go]').forEach(b=>b.onclick=()=>openCard(b.dataset.cardGo));
@@ -41,7 +42,8 @@ function renderBoard(){
  $('#inbox-count').textContent=visibleCards().filter(c=>!c.folder&&c.zone==='inbox').length;
  for(const zone of ['do','plan','delegate','later']){
   const cs=visibleCards().filter(c=>!c.folder&&c.zone===zone);
-  $('#zone-'+zone).innerHTML=cs.map(c=>cardHTML(c,true)).join('')||'';
+  $('#zone-'+zone).classList.toggle('auto-layout',autoLayout);
+  $('#zone-'+zone).innerHTML=cs.map(c=>cardHTML(c,!autoLayout)).join('')||'';
 
  }
  $('#board-save').textContent=board.saved_at?'已保存 · '+board.saved_at.slice(11,19):'安排会自动保存到本机';
@@ -74,7 +76,7 @@ function cardEditor(id='',type='folder',parent=''){
  const value={...c,title:String(fd.get('title')).trim(),target,zone:String(fd.get('zone')),folder:String(fd.get('folder')||'')};if(value.zone!==c.zone&&value.zone!=='inbox'&&!value.folder){const occupied=board.cards.filter(x=>!x.folder&&x.zone===value.zone&&x.id!==c.id).length;value.x=(occupied%2)*0.9;value.y=(Math.floor(occupied/2)%3)*0.45;}
  if(await changeBoard(()=>{if(existing)Object.assign(existing,value);else board.cards.unshift(value);})){close();if(isNew){boardFilter='';boardKind='';$('#board-search').value='';$('#board-kind').value='';renderBoard();$('#inbox-cards').scrollTop=0;}toast('安排已保存');}
  };
- if(existing){$('#card-task').onclick=()=>todoEditor('',c.id);$('#card-remove').onclick=async()=>{if(await changeBoard(()=>{board.cards=board.cards.filter(x=>x.id!==id);visibleCards().filter(x=>x.folder===id).forEach(x=>{x.folder='';x.zone='inbox';});board.todos.filter(x=>x.card===id).forEach(x=>x.card='');})){close();toast('已移除快捷方式，源会话与文件保留');}};
+ if(existing){$('#card-task').onclick=()=>todoEditor('',c.id);$('#card-remove').onclick=async()=>{if(await changeBoard(()=>{board.cards=board.cards.filter(x=>x.id!==id);visibleCards().filter(x=>x.folder===id).forEach(x=>{x.folder='';x.zone='inbox';});board.todos.filter(x=>x.card===id).forEach(x=>{if(!x.project_id&&c.type==='project')x.project_id=c.target;x.card='';});})){close();toast('已移除快捷方式，源会话与文件保留');}};
  if(c.type==='thread'){$('#card-link').onclick=()=>copy('codex://threads/'+c.target);$('#card-resume').onclick=()=>copy('codex resume '+c.target);}}
 }
 function renderCalendar(){
@@ -84,19 +86,13 @@ function renderCalendar(){
  for(let d=1;d<=days;d++){const date=localDate(new Date(year,month,d)),tasks=board.todos.filter(t=>t.date===date),pending=tasks.filter(t=>!t.done).length;html+=`<button class="calendar-day ${date===selectedDay?'selected':''} ${date===localDate(new Date())?'today':''}" data-day="${date}" aria-label="${date}，${pending} 项未完成" aria-pressed="${date===selectedDay}"><span>${d}</span>${tasks.length?`<i class="${pending?'':'complete'}"></i>`:''}</button>`;}
  $('#calendar-grid').innerHTML=html;$$('[data-day]').forEach(b=>b.onclick=()=>{selectedDay=b.dataset.day;renderCalendar();});
  const due=board.todos.filter(t=>t.date===selectedDay);$('#selected-day').textContent=selectedDay.slice(5).replace('-',' 月 ')+' 日';
- $('#todo-list').innerHTML=due.map(t=>`<div class="todo-row ${t.done?'done':''}"><input type="checkbox" data-toggle-task="${t.id}" ${t.done?'checked':''} aria-label="完成 ${esc(t.title)}"><button data-edit-task="${t.id}"><span>${esc(t.title)}</span><small>${esc(cardBy(t.card)?.title||'未关联卡片')}</small></button></div>`).join('')||'<p class="calendar-empty">暂无待办</p>';
- $$('[data-toggle-task]').forEach(b=>b.onchange=()=>changeBoard(()=>{board.todos.find(t=>t.id===b.dataset.toggleTask).done=b.checked;}));
+ $('#todo-list').innerHTML=due.map(t=>`<div class="todo-row ${t.done?'done':''}"><input type="checkbox" data-toggle-task="${esc(t.id)}" ${t.done?'checked':''} aria-label="完成 ${esc(t.title)}"><button data-edit-task="${esc(t.id)}"><span>${esc(t.title)}</span><small>${esc((t.project_id?taskProjectLabel(t.project_id):cardBy(t.card)?.title)||'未关联项目')}</small></button></div>`).join('')||'<p class="calendar-empty">暂无待办</p>';
+ $$('[data-toggle-task]').forEach(b=>b.onchange=()=>toggleTask(b.dataset.toggleTask,b.checked));
  $$('[data-edit-task]').forEach(b=>b.onclick=()=>todoEditor(b.dataset.editTask));
  const overdue=board.todos.filter(t=>!t.done&&t.date<localDate(new Date()));$('#overdue').textContent=overdue.length?`${overdue.length} 项待办已过期 · 点击查看`:'';$('#overdue').hidden=!overdue.length;
 }
-function todoEditor(id='',card=''){
- activeFolder='';const existing=board.todos.find(t=>t.id===id),t=existing||{id:newId('todo'),title:'',date:selectedDay,card,done:false};
- drawer(`<h2>${existing?'编辑待办':'添加待办'}</h2><form id="todo-form" class="desk-form"><label>要完成的事<input name="title" required maxlength="1000" value="${esc(t.title)}" placeholder="写下一个具体、可完成的小步骤"></label><label>计划日期<input type="date" name="date" required value="${t.date}"></label><label>关联项目 / 会话<select name="card"><option value="">不关联</option>${board.cards.map(c=>`<option value="${c.id}" ${c.id===t.card?'selected':''}>${esc(c.title)}</option>`).join('')}</select></label><label class="check-label"><input type="checkbox" name="done" ${t.done?'checked':''}> 已完成</label><div class="actions"><button type="submit" class="button primary">保存待办</button><button type="button" class="button secondary" id="todo-cancel">取消</button>${existing?'<button type="button" class="text-button danger" id="todo-remove">删除此待办</button>':''}</div></form>${t.card?'<button id="todo-card" class="button secondary">打开关联卡片</button>':''}`);
- $('#todo-cancel').onclick=close;
- $('#todo-form').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),v={...t,title:String(f.get('title')).trim(),date:String(f.get('date')),card:String(f.get('card')),done:f.has('done')};if(await changeBoard(()=>{if(existing)Object.assign(existing,v);else board.todos.push(v);})){selectedDay=v.date;calendarMonth=new Date(v.date+'T12:00:00');calendarMonth.setDate(1);renderCalendar();close();toast('待办已保存');}};
- if(existing)$('#todo-remove').onclick=async()=>{if(await changeBoard(()=>board.todos=board.todos.filter(x=>x.id!==id)))close();};
- if(t.card)$('#todo-card').onclick=()=>{close();openCard(t.card);};
-}
+function todoEditor(id='',card=''){const c=cardBy(card);return taskEditor(id,{card,project_id:c?.type==='project'?c.target:project,start_date:selectedDay,date:selectedDay});}
+
 function wireBoard(){
  for(const id of ['do','plan','delegate','later','inbox']){
   const el=id==='inbox'?$('#inbox-cards'):$('#zone-'+id);
@@ -104,11 +100,12 @@ function wireBoard(){
   el.ondragleave=e=>{if(!el.contains(e.relatedTarget))el.classList.remove('drop-active');};
   el.ondrop=e=>{e.preventDefault();el.classList.remove('drop-active');const c=cardBy(e.dataTransfer.getData('text/plain'));if(!c)return;const r=el.getBoundingClientRect(),style=getComputedStyle(el),w=parseFloat(style.getPropertyValue('--desk-card-width'))||148,h=parseFloat(style.getPropertyValue('--desk-card-height'))||62;changeBoard(()=>{c.zone=id;c.folder='';c.x=Math.max(0,Math.min(1,(e.clientX-r.left-w/2)/Math.max(1,r.width-w)));c.y=Math.max(0,Math.min(1,(e.clientY-r.top-h/2)/Math.max(1,r.height-h)));});};
  }
+ $('#board-layout-toggle').onclick=()=>{autoLayout=!autoLayout;$('#board-layout-toggle').textContent=autoLayout?'自由摆放':'自动排列';$('#board-layout-toggle').setAttribute('aria-pressed',autoLayout);renderBoard();};
  $('#new-folder').onclick=()=>cardEditor();$('#new-thread').onclick=()=>cardEditor('','thread');$('#new-directory').onclick=()=>cardEditor('','directory');
  $('#board-search').oninput=e=>{boardFilter=e.target.value;renderBoard();};$('#board-kind').onchange=e=>{boardKind=e.target.value;renderBoard();};
  $('#add-todo').onclick=()=>todoEditor();$('#month-prev').onclick=()=>{calendarMonth.setMonth(calendarMonth.getMonth()-1);renderCalendar();};$('#month-next').onclick=()=>{calendarMonth.setMonth(calendarMonth.getMonth()+1);renderCalendar();};
  $('#calendar-today').onclick=()=>{selectedDay=localDate(new Date());calendarMonth=new Date();calendarMonth.setDate(1);renderCalendar();};
- $('#overdue').onclick=()=>{const tasks=board.todos.filter(t=>!t.done&&t.date<localDate(new Date())).sort((a,b)=>a.date.localeCompare(b.date));drawer('<h2>已过期的待办</h2>'+tasks.map(t=>`<button class="overdue-task" data-overdue-task="${t.id}">${esc(t.date)} · ${esc(t.title)}</button>`).join(''));$$('[data-overdue-task]').forEach(b=>b.onclick=()=>todoEditor(b.dataset.overdueTask));};
+ $('#overdue').onclick=()=>{const tasks=board.todos.filter(t=>!t.done&&t.date<localDate(new Date())).sort((a,b)=>a.date.localeCompare(b.date));drawer('<h2>已过期的待办</h2>'+tasks.map(t=>`<button class="overdue-task" data-overdue-task="${esc(t.id)}">${esc(t.date)} · ${esc(t.title)}</button>`).join(''));$$('[data-overdue-task]').forEach(b=>b.onclick=()=>todoEditor(b.dataset.overdueTask));};
  $('#board-backup').onclick=()=>{const blob=new Blob([JSON.stringify(board,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='research-desk-'+localDate(new Date())+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
  $('#board-help').onclick=()=>drawer('<h2>使用说明</h2><p>从“待安排”拖出卡片，放进四象限。卡片在同一个象限内也能自由摆放。拖到文件夹上就能收进去；点卡片右上角的 ··· 可以用菜单调整位置、移出文件夹、关联待办。</p><h3>点击卡片会发生什么</h3><p>项目卡片打开结果、版本与目录详情；会话卡片调用本机 Codex；目录卡片打开文件资源管理器；文件夹展示里面的卡片。桌面上的文件夹只是视觉分组。</p><h3>日历与保存</h3><p>点击日期，再添加待办。勾选可标记完成，点击文字可编辑日期和关联会话。日期按本机时间显示。这是计划日历，不会自动启动分析或弹出定时提醒。</p><p>安排保存在工作区数据目录的 desktop_board_state.json；前一次保存为 desktop_board_state.previous.json。文件清单更新不会覆盖你的安排。</p><h3>会话导入范围</h3><p>会话目录来自工作区已有登记。可以用“添加会话”补充链接。登记信息不代表会话当前的运行状态。</p>');
 }

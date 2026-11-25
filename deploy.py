@@ -16,6 +16,7 @@ import webbrowser
 
 import desktop_manage as manage
 import desktop_runtime as rt
+import desktop_contract as contract
 from desktop_storage import workspace_lock, write_json, read_json
 from deploy_codex import DeploymentError, register
 
@@ -95,8 +96,9 @@ def mcp_check(config):
     replies = {r['id']: r for r in map(json.loads, result.stdout.decode('utf8').splitlines())}
     if replies.get(3, {}).get('result', {}).get('isError', True):
         raise DeploymentError('MCP workspace check failed.')
-    count = len(replies.get(2, {}).get('result', {}).get('tools', []))
-    if count != 10:
+    inventory = replies.get(2, {}).get('result', {}).get('tools', [])
+    count = len(inventory)
+    if count != len(contract.TOOLS) or {item.get('name') for item in inventory} != set(contract.TOOLS):
         raise DeploymentError('Unexpected MCP tool inventory.')
     return count
 

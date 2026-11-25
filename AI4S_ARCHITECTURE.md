@@ -14,7 +14,10 @@ flowchart TD
   Contract --> MCP
   Services --> Repository[项目资料]
   Services --> Links[会话关联]
-  HTTP --> Board[卡片与日程]
+  Services --> Board[卡片与日程]
+  Board --> Tasks[日期、依赖与重复规则]
+  Services --> History[变更记录与冲突检查撤销]
+  Services --> Diagnostics[本地诊断与路径映射]
   Repository --> Storage[原子 JSON 与跨进程锁]
   Links --> Storage
   Board --> Storage
@@ -29,6 +32,9 @@ flowchart TD
 | `desktop_addresses.py` | 校验附加命名地址，解析本地路径、服务器别名及网页链接 |
 | `desktop_links.py` | 项目与会话关联、独立关联版本 |
 | `desktop_state.py` | 卡片、单层文件夹、待办及布局版本 |
+| `desktop_tasks.py` | 任务兼容规范化、日期和依赖校验、重复任务生成 |
+| `desktop_history.py` | 按存储记录业务变更，按字段检查冲突并撤销 |
+| `desktop_diagnostics.py` | 本地路径诊断、映射预览和显式保存；不执行远程探测 |
 | `desktop_services.py` | 项目查询、新建、修改、归档恢复和汇总 |
 | `desktop_contract.py` | v1 路由、工具定义、JSON Schema、OpenAPI |
 | `desktop_server.py` | HTTP、静态页面、可选文件查询、导航和刷新入口 |
@@ -41,8 +47,27 @@ flowchart TD
 | `desktop/app.js` | 项目资料、结果和文件查询视图 |
 | `desktop/board.js` | 拖放、文件夹、计划本 |
 | `desktop/details.js` | 结构化详情、项目编辑和会话关联 |
+| `desktop/tasks.js` | 任务列表与编辑，共享计划本任务和公开接口 |
+| `desktop/gantt.js` | 日期轴、依赖与里程碑显示，拖动改期 |
+| `desktop/workspace.js` | 统一搜索、历史、诊断和迁移交互 |
 
 前端和 MCP 不直接修改研究文件。数据适配器由用户在工作区配置中明确指定，与核心程序分开。状态卡片没有默认后台计算任务；没有接入适配器时，进度由用户或 Agent 更新。
+
+## 任务与状态
+
+1.2 继续把任务保存在 `desktop_board_state.json` 的 `todos` 中，避免复制出甘特图专用数据。每项任务直接关联项目；卡片是可移除的导航入口。旧待办在内存中规范化，读取不写入；首次编辑时保存兼容字段与新增任务字段。
+
+任务业务由服务层统一实现，网页与 MCP 只传递输入和结果。日历显示截止日期，甘特图显示开始至截止日期。依赖校验拒绝循环，并对日期重叠及未完成前置任务给出提示，不自动改变其他任务的日期。重复任务通过稳定后续实例 ID 防止重复生成。
+
+项目的研究阶段、运行状态和采用情况分别登记；来源观察时间与保存更新时间不同。结果版本逐项记录用途和来源。运行记录适配器仅更新运行观察，不决定科学结论；见 [按需导入](docs/RUN_ADAPTER.md)。
+
+## 历史和并发
+
+项目、桌面与会话关联分别使用自己的 revision。历史与对应元数据保存在同一次原子 JSON 写入中，每个存储保留最近 100 次内容变化。历史可能包含旧的私人项目说明，个人迁移包同样视为私人资料。
+
+撤销逐项比较本次修改后的值与当前值。后续无关字段可以保留；同一字段已经改变时拒绝自动覆盖。正常读接口不会把历史作为项目字段暴露，专用历史接口用于查看与撤销。自动更新时间不作为人工字段的撤销冲突依据。
+
+刷新网页任务时必须同步读取完整桌面快照；不能用新 revision 搭配旧卡片位置保存。多客户端仍通过冲突检查协调，不提供多人协作服务。
 
 ## 工作区配置
 

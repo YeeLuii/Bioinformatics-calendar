@@ -1,4 +1,4 @@
-# AI4S Agent Interface v1.1.0
+# AI4S Agent Interface v1.2.0
 
 ## Scope and invariants
 
@@ -37,9 +37,9 @@ After deployment is verified, ask the user: “是否要分析当前会话和项
 
 If the user agrees, confirm the source scope: the current conversation, selected accessible conversations, and/or specified project directories. If the user already supplied an explicit scope, use it without asking again. Read authorized source material through the capabilities actually available in the current client. When chat-reading tools are unavailable, use the current conversation and user-provided project documentation instead of claiming to have inspected other chats.
 
-Read `projects_list` before importing. Match work to existing stable project IDs; multiple chats can belong to one project. Use `project_create` or a narrow `project_update` patch to register the research question, current progress, adopted version, result scope, local/server locations and next steps. Record source references and the observation date in the overview text; label uncertain progress explicitly. Preserve unrelated metadata and the existing calendar. Register known chat UUIDs separately with `project_threads_set`, retaining existing links.
+Read `projects_list` before importing. Match work to existing stable project IDs; multiple chats can belong to one project. Use `project_create` or a narrow `project_update` patch to register the research question, current progress, adopted version, result scope, local/server locations and next steps. Record source references in `source`, observation time in `observed_at`, and review time in `reviewed_at`; do not mistake the automatic `updated_at` for a fresh source observation. Preserve unrelated metadata and the existing calendar. Register known chat UUIDs separately with `project_threads_set`, retaining existing links.
 
-Report imported/updated projects, source coverage and unresolved items. New MCP-created projects appear in the project list; an existing saved board requires the user to select “加入桌面” in project details. Project-level `todo` is summary text, not a dated calendar entry. The 10 project MCP tools do not create calendar todos.
+Report imported/updated projects, source coverage and unresolved items. New MCP-created projects appear in the project list; use `card_create` to add a requested desktop shortcut, or let the user select “加入桌面”. Project-level `todo` is summary text; use `task_create` for dated tasks. Use stable IDs to avoid duplicate imports. Same-ID creates with matching submitted fields return the existing item; different content causes conflict.
 
 For later synchronization, read new source evidence before applying changes. `project_summarize` only summarizes stored metadata and cannot discover new progress. Continuous synchronization requires a separately configured adapter or another explicit user request.
 
@@ -57,8 +57,24 @@ For later synchronization, read new source evidence before applying changes. `pr
 | `project_threads_get` | `project_id` | None; returns independent chat-link `revision` |
 | `project_threads_set` | `project_id`, `threads`, `expected_revision` | Replaces all links for this project; no chat messages |
 | `workspace_status` | none | None; paths, capability flags, schema and protocol versions |
+| `tasks_list` | optional `project_id` | None; returns board revision, tasks and dependency warnings |
+| `task_create` | `task`, `expected_revision` | Adds a task; required title/date, optional stable id |
+| `task_update` | `task_id`, `patch`, `expected_revision` | Updates one task; repeat completion creates one next instance |
+| `task_remove` | `task_id`, `expected_revision` | Removes task metadata; refuses dangling dependencies |
+| `cards_list` | none | None; cards/folders and board revision |
+| `card_create` | `card`, `expected_revision` | Adds a shortcut or single-level folder |
+| `card_update` | `card_id`, `patch`, `expected_revision` | Changes one card's label, folder or position |
+| `card_remove` | `card_id`, `expected_revision` | Removes shortcut; preserves direct task-project links |
+| `history_list` | none | None; recent changes and aggregate history revision |
+| `history_undo` | `entry_id`, `expected_revision` | Reverts touched fields only; conflicting later edits cause rejection |
+| `workspace_diagnostics` | none | Checks registered local directory availability; no SSH |
+| `path_mappings_preview` | `mappings` | Read-only navigation preview |
+| `path_mappings_set` | `mappings`, `expected_revision` | Saves navigation mappings, never moves files |
+| `workspace_export` | `format`, optional `project_id` | Returns markdown/ics/json text; no arbitrary file writes |
 
 Project fields: `name`, `summary`, `status`, `current_version`, `scope`, `todo`, `local`, `remote`, `ssh_alias`. Omitted fields in an update remain unchanged. Empty strings intentionally clear fields. Unknown keys and invalid types are rejected. There is no implicit creation during `project_update`.
+
+1.2 provenance fields: `source`, `observed_at`, `reviewed_at`, `research_stage`; runtime fields: `run_status` (unknown/queued/running/succeeded/failed/cancelled), `run_source`, `run_observed_at`; research adoption: `adoption_status` (pending/exploratory/adopted). Keep them independent. A successful calculation must not automatically promote a result to article-ready. `result_versions` holds up to 100 entries with stable id, name, version, category, status, scope, todo, path, source, observed_at and reviewed_at. Only id/name/version are required. Read before replacing the array; preserve other analysis modules and old versions.
 
 Optional `addresses` adds up to 50 named locations: `{id, kind, path, label?, ssh_alias?}`. The kind is `local`, `server`, or `url`; id is stable and unique within the project. Server paths are absolute and may use independent SSH aliases; local paths may be workspace-relative; web links allow HTTP/HTTPS without embedded credentials. Read the existing array before changing it: omitted addresses preserves it, a supplied array replaces it, and [] clears extras without clearing primary local/remote. See [data model](docs/DATA_MODEL.md). Do not use older application versions to write projects containing addresses.
 
@@ -71,6 +87,11 @@ Optional `addresses` adds up to 50 named locations: `{id, kind, path, label?, ss
 3. On `revision_conflict`, read again, compare the user's requested change with the latest state, and construct a new patch. Do not retry with an invented revision or overwrite unrelated fields.
 4. For conversation links, use the independent revision from `project_threads_get`; preserve existing entries unless the user intends to remove them.
 5. Use `project_archive` to reduce the active project list, and `project_restore` to reverse it. These operations do not delete source files or real chats.
+6. For tasks/cards, read `tasks_list` or `cards_list` and use their shared board revision; do not use a project revision. Prefer single-item APIs over whole-board replacement.
+7. A task directly references `project_id`; its optional `card` is only a shortcut. Removing a shortcut must not orphan the task. Use `start_date` and `date` for Gantt spans, `dependencies` for existing predecessor IDs, and `milestone=true` only for same-day spans. Overlapping schedules return warnings, without silently moving dependent tasks.
+8. `repeat` supports none/daily/weekly/monthly. Completing an instance creates the next once, anchored to its planned dates. Do not independently generate another copy. Task progress is not scientific confidence.
+9. Read `history_list` to inspect changes and use its aggregate revision for `history_undo`. Undo preserves unrelated later edits and rejects overwritten target fields. Historical records are bounded to 100 changes per store. A multi-project import consists of several tracked operations, not one cross-store atomic transaction.
+10. For migration, preview mappings, inspect changes, then save with the returned `config_revision`. Diagnose servers as unverified unless an explicit external adapter has observed them. No directory traversal, SSH or live process scan is implied by diagnostics.
 
 Example `tools/call` arguments:
 
@@ -101,11 +122,25 @@ GET   /api/v1/projects/{project_id}/summary
 GET   /api/v1/projects/{project_id}/threads
 PUT   /api/v1/projects/{project_id}/threads
 GET   /api/v1/workspace
+GET   /api/v1/tasks
+POST  /api/v1/tasks
+PATCH /api/v1/tasks/{task_id}
+POST  /api/v1/tasks/{task_id}/remove
+GET   /api/v1/cards
+POST  /api/v1/cards
+PATCH /api/v1/cards/{card_id}
+POST  /api/v1/cards/{card_id}/remove
+GET   /api/v1/history
+POST  /api/v1/history/{entry_id}/undo
+GET   /api/v1/diagnostics
+POST  /api/v1/path-mappings/preview
+PUT   /api/v1/path-mappings
+GET   /api/v1/export?format=markdown
 GET   /api/openapi.json
 GET   /api/agent-guide
 ```
 
-Body fields equal the MCP arguments except `project_id`, which comes from the path. Expected errors: 400 invalid request, 403 write authorization failure, 404 unknown project, 409 stale revision. Machine schemas and per-operation methods are authoritative in `openapi.json`, generated from the same contracts as `tools/list`.
+Body fields equal the MCP arguments except route identifiers, which come from the path. Query parameters are declared by OpenAPI. All POST/PUT/PATCH requests require the token, including read-only previews. Expected errors: 400 invalid request, 403 write authorization failure, 404 unknown record, 409 stale revision or conflicting undo. Machine schemas and per-operation methods are authoritative in `openapi.json`, generated from the same contracts as `tools/list`.
 
 ## Data and summarization semantics
 

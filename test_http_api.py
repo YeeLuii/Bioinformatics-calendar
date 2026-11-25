@@ -104,6 +104,39 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(self.call('/api/open-folder', 'POST', {'id': 'project:study:address:docs'}, auth)[0], 400)
         self.assertEqual(self.call('/api/open-folder', 'POST', {'id': 'project:study:address:unknown'}, auth)[0], 400)
 
+    def test_tasks_history_diagnostics_and_export_over_http(self):
+        auth = {'X-Desk-Token': self.token}
+        self.assertEqual(self.call('/api/v1/projects', 'POST', {'expected_revision': 0,
+            'project': {'id': 'study', 'name': 'Study', 'local': '.', 'remote': '/srv/example'}}, auth)[0], 200)
+        task = {'id': 'first', 'title': 'Review results', 'project_id': 'study',
+                'start_date': '2026-11-25', 'date': '2026-11-27'}
+        self.assertEqual(self.call('/api/v1/tasks', 'POST', {'task': task, 'expected_revision': 0})[0], 403)
+        code, created = self.call('/api/v1/tasks', 'POST', {'task': task, 'expected_revision': 0}, auth)
+        self.assertEqual(code, 200, created)
+        contract.validate(created, contract.OUTPUTS['task_create'])
+        self.assertEqual(self.call('/api/v1/tasks?project_id=study')[1]['tasks'][0]['id'], 'first')
+        self.assertEqual(self.call('/api/v1/tasks?project_id=other')[1]['tasks'], [])
+        code, edited = self.call('/api/v1/tasks/first', 'PATCH', {'expected_revision': created['revision'],
+            'patch': {'date': '2026-11-28'}}, auth)
+        self.assertEqual(code, 200, edited)
+        self.assertEqual(self.call('/api/v1/tasks/first', 'PATCH', {'expected_revision': created['revision'],
+            'patch': {'date': '2026-11-29'}}, auth)[0], 409)
+        history = self.call('/api/v1/history')[1]
+        entry = next(e for e in history['entries'] if any(c['after'] and c['after'].get('date') == '2026-11-28' for c in e['changes']))
+        code, undone = self.call('/api/v1/history/' + entry['id'] + '/undo', 'POST',
+            {'expected_revision': history['revision']}, auth)
+        self.assertEqual(code, 200, undone)
+        self.assertEqual(self.call('/api/v1/tasks')[1]['tasks'][0]['date'], '2026-11-27')
+        code, diagnostics = self.call('/api/v1/diagnostics')
+        self.assertEqual(code, 200)
+        contract.validate(diagnostics, contract.OUTPUTS['workspace_diagnostics'])
+        self.assertTrue(any(p['kind'] == 'server' and p['status'] == 'unverified' for p in diagnostics['locations']))
+        code, calendar = self.call('/api/v1/export?format=ics')
+        self.assertEqual(code, 200, calendar)
+        self.assertIn('BEGIN:VCALENDAR', calendar['content'])
+        self.assertIn('DTEND;VALUE=DATE:20261128', calendar['content'])
+        self.assertEqual(self.call('/api/v1/export?format=executable')[0], 400)
+
 
 class ContractTests(unittest.TestCase):
     def test_cli_output_is_utf8_under_legacy_windows_encoding(self):

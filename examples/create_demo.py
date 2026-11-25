@@ -40,7 +40,14 @@ def create(destination, day, port=8841):
             current_version=version, scope='演示数据；用于说明项目组织方式，不代表科学结论。',
             todo=todo, local='results/' + pid,
             remote='/srv/research/demo/' + pid if server else '',
-            ssh_alias='demo-cluster' if server else '', counts={}))
+            ssh_alias='demo-cluster' if server else '', counts={},
+            source='results/' + pid + '/README.md', observed_at=stamp,
+            reviewed_at=stamp if pid == 'metabolomics' else '',
+            research_stage='结果复核' if pid in {'rnaseq','metabolomics','figures'} else '准备与分析',
+            run_status='succeeded' if pid in {'rnaseq','metabolomics'} else 'unknown',
+            run_observed_at=stamp if pid in {'rnaseq','metabolomics'} else '',
+            run_source='演示运行记录' if pid in {'rnaseq','metabolomics'} else '',
+            adoption_status='adopted' if pid == 'metabolomics' else 'exploratory'))
     bundles = []
     rows = []
     definitions = [
@@ -88,6 +95,27 @@ def create(destination, day, port=8841):
         dict(id='todo-backup', title='保存本周分析记录', date=day.isoformat(), card='p-notes', done=True),
         dict(id='todo-plan', title='确认候选验证材料', date=(day+datetime.timedelta(days=2)).isoformat(), card='p-validation', done=False),
     ]
+    for task in todos:
+        task.update(project_id=task['card'][2:], start_date=task['date'],
+                    status='done' if task['done'] else 'todo', progress=100 if task['done'] else 0,
+                    dependencies=[], milestone=False, repeat='none', notes='')
+    todos[0].update(start_date=(day-datetime.timedelta(days=2)).isoformat(), status='doing', progress=60)
+    todos[1].update(start_date=(day-datetime.timedelta(days=1)).isoformat(), status='doing', progress=30)
+    todos[2]['repeat'] = 'weekly'
+    todos.extend([
+        dict(id='todo-analysis', title='完成候选表达复核', project_id='validation',
+             start_date=(day+datetime.timedelta(days=3)).isoformat(), date=(day+datetime.timedelta(days=7)).isoformat(),
+             card='p-validation', done=False, status='todo', progress=0, dependencies=['todo-plan'],
+             milestone=False, repeat='none', notes='先确认验证材料，再整理表达与文献支持。'),
+        dict(id='todo-milestone', title='候选方案确认', project_id='validation',
+             start_date=(day+datetime.timedelta(days=8)).isoformat(), date=(day+datetime.timedelta(days=8)).isoformat(),
+             card='p-validation', done=False, status='todo', progress=0, dependencies=['todo-analysis'],
+             milestone=True, repeat='none', notes='完成复核后确认下一阶段方案。'),
+        dict(id='todo-record', title='检查本周分析记录', project_id='notes',
+             start_date=(day+datetime.timedelta(days=4)).isoformat(), date=(day+datetime.timedelta(days=4)).isoformat(),
+             card='p-notes', done=False, status='todo', progress=0, dependencies=[],
+             milestone=False, repeat='weekly', notes='记录输入、脚本版本和结果位置。'),
+    ])
     state.save(dict(revision=0, cards=cards, todos=todos))
     print('Synthetic demo ready: ' + str(dest / 'workspace.json'))
 
